@@ -75,6 +75,20 @@
           <span>Volume <output id="volume-output">100%</output></span>
           <input type="range" id="volume-range" min="0" max="1" step="0.05" value="1" />
         </label>
+
+        <label class="toggle-row" for="mood-modifiers-toggle">
+          <span>Apply Mood Modifiers</span>
+          <span class="toggle-switch">
+            <input type="checkbox" id="mood-modifiers-toggle" />
+            <span class="toggle-track"><span class="toggle-thumb"></span></span>
+          </span>
+        </label>
+        <p class="popout-hint">
+          Off by default. When on, active moods subtly adjust speaking
+          speed and pitch — e.g. Hungry/Sad slow and lower it a touch,
+          Full/Happy speed it up and lift it. Multiple active moods stack.
+        </p>
+
         <button id="test-voice-btn" class="btn btn-secondary" type="button">🔊 Test voice</button>
 
         <div class="settings-divider" role="separator"></div>
@@ -102,7 +116,7 @@
       </div>
       <div class="popout-body">
         <input type="search" id="nav-search" class="nav-search" autocomplete="off"
-               placeholder="Search words &amp; sentences…" aria-label="Search words and sentences" />
+               placeholder="Search…" aria-label="Search this category" />
 
         <div class="nav-section" id="nav-frequent-section">
           <h3 class="nav-section-title">⭐ Most used</h3>

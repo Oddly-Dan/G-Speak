@@ -22,9 +22,10 @@ Available voices depend on the device and OS.
   device's on-screen keyboard. Hit **Enter** or the big green **Speak!**
   button to have it read aloud. The bar clears after speaking.
 - **Voice settings** — behind the ⚙️ cog icon: pick a voice, and adjust
-  speed, pitch, and volume. Saved per device. The same pop-out has
-  **Export**/**Import** buttons to back up or restore everything below
-  (see [Backup](#backup)).
+  speed, pitch, and volume, plus an **Apply Mood Modifiers** toggle (see
+  [Mood modifiers](#mood-modifiers)). Saved per device. The same pop-out
+  has **Export**/**Import** buttons to back up or restore everything
+  below (see [Backup](#backup)).
 - **Suggestions strip** — quick-tap words/phrases under the sentence bar.
   Starts with `Hi, Greetings, Yes, No, Help`. `Yes`, `No`, and `Help`
   (📌) always stay. The others are gradually replaced by whatever you
@@ -34,12 +35,13 @@ Available voices depend on the device and OS.
   Mad/Joyful, Nervous/Excited, Hurt/Great. State is remembered per device.
 - **Fast nav** — six category tiles (Emoji-Speak, Words, Sentences,
   Numbers, Needs, Things). Tapping one opens a shared **browse** pop-over:
-  a search box that filters matching words/sentences across every
-  category, a "⭐ Most used" row (the same usage data behind the
-  suggestions strip), and tabs to jump between categories without
-  closing and reopening. The goal is to reach almost anything in a
-  couple of taps. Current items are a placeholder starting set meant to
-  be built out further.
+  a search box, a "⭐ Most used" row scoped to that category, and tabs to
+  jump between categories without closing and reopening. **Search is
+  scoped to whichever category tab is active** — searching while in
+  Sentences only ever matches Sentences, never Words or Numbers; switch
+  tabs (or use ⌨️/the sentence bar directly) to search a different one.
+  The goal is to reach almost anything in a couple of taps. Current
+  items are a starting set meant to be built out further.
 
 ### Emoji-Speak
 
@@ -56,6 +58,41 @@ literal picture: 👤 stands for "I", 🫵 for "you", ➡️ for "go" rather tha
 "right". It's grouped as pronouns, core requesting words (go, stop, want,
 more, help, eat…), directions, basic feelings, and simple manners
 (hi/bye/please/thank you/sorry/yes/no).
+
+On top of that visible grid, Emoji-Speak also carries a much larger set of
+plain, everyday emoji — animals, food, nature, vehicles, everyday objects,
+body parts, family, activities — each given a word (🐶 "dog", 🍕 "pizza",
+🌳 "tree"…) for things that don't have an obvious "basic speech" corollary
+of their own. These are **search-only**: they don't clutter the curated
+grid, but typing e.g. "dog" while in Emoji-Speak finds them. They're
+deliberately limited to long-established, single-codepoint emoji (roughly
+2016-2018 and earlier) that render reliably on any device — skipping
+skin-tone variants, gender/profession combinations, family groups, and
+flags, which are multi-codepoint sequences that don't render consistently
+everywhere.
+
+## Mood modifiers
+
+Off by default, behind the ⚙️ settings pop-out. When on, whichever moods
+are currently toggled on subtly shift the speaking rate and/or pitch —
+active moods **stack** (multiply together):
+
+| Mood | Effect |
+|---|---|
+| Hungry / Thirsty | ×0.95 speed |
+| Full / Hydrated | ×1.05 speed |
+| Sad | ×0.95 speed, ×0.95 pitch |
+| Happy | ×1.05 speed, ×1.05 pitch |
+| Mad | ×0.9 pitch |
+| Joyful | ×1.1 pitch |
+| Nervous | ×0.9 speed, ×1.1 pitch |
+| Excited | ×1.1 speed, ×1.1 pitch |
+| Hurt | ×0.9 pitch |
+| Great | ×1.1 speed, ×1.1 pitch |
+
+These multiply onto whatever Speed/Pitch are set to in Voice Settings,
+and are clamped to a sane range so several stacked moods can't push the
+voice into unusable territory.
 
 ## Data & privacy
 

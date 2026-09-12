@@ -79,6 +79,102 @@
         { emoji: "😔", word: "sorry" }, { emoji: "👍", word: "yes" },
         { emoji: "👎", word: "no" },
       ],
+      // Not shown in the visible grid — the grid stays a small, curated
+      // "3-5 year old" core vocabulary — but findable by search once
+      // you're in Emoji-Speak. This is a much wider net of ordinary
+      // Unicode emoji (animals, food, nature, everyday objects, people,
+      // activities) that don't have an obvious "basic speech" corollary
+      // of their own, given a plain word so they're still real vocabulary
+      // rather than decoration. Deliberately limited to long-established,
+      // single-codepoint emoji (roughly Unicode 9.0/2016 and earlier, a
+      // few up to 11.0/2018) that render reliably everywhere — skipping
+      // skin-tone variants, gender/profession combinations, family
+      // groups, and flags, which are multi-codepoint sequences that
+      // don't render consistently across every device and OS.
+      hiddenItems: [
+        // Animals
+        { emoji: "🐶", word: "dog" }, { emoji: "🐱", word: "cat" },
+        { emoji: "🐭", word: "mouse" }, { emoji: "🐹", word: "hamster" },
+        { emoji: "🐰", word: "rabbit" }, { emoji: "🦊", word: "fox" },
+        { emoji: "🐻", word: "bear" }, { emoji: "🐼", word: "panda" },
+        { emoji: "🐨", word: "koala" }, { emoji: "🐯", word: "tiger" },
+        { emoji: "🦁", word: "lion" }, { emoji: "🐮", word: "cow" },
+        { emoji: "🐷", word: "pig" }, { emoji: "🐸", word: "frog" },
+        { emoji: "🐵", word: "monkey" }, { emoji: "🐔", word: "chicken" },
+        { emoji: "🐧", word: "penguin" }, { emoji: "🐦", word: "bird" },
+        { emoji: "🦆", word: "duck" }, { emoji: "🦉", word: "owl" },
+        { emoji: "🦇", word: "bat" }, { emoji: "🐺", word: "wolf" },
+        { emoji: "🐴", word: "horse" }, { emoji: "🦄", word: "unicorn" },
+        { emoji: "🐝", word: "bee" }, { emoji: "🦋", word: "butterfly" },
+        { emoji: "🐌", word: "snail" }, { emoji: "🐞", word: "ladybug" },
+        { emoji: "🐢", word: "turtle" }, { emoji: "🐍", word: "snake" },
+        { emoji: "🐙", word: "octopus" }, { emoji: "🐠", word: "fish" },
+        { emoji: "🐬", word: "dolphin" }, { emoji: "🐳", word: "whale" },
+        { emoji: "🦈", word: "shark" }, { emoji: "🐘", word: "elephant" },
+        { emoji: "🦓", word: "zebra" }, { emoji: "🦒", word: "giraffe" },
+        { emoji: "🐪", word: "camel" }, { emoji: "🐑", word: "sheep" },
+        { emoji: "🐐", word: "goat" }, { emoji: "🦌", word: "deer" },
+        { emoji: "🐿️", word: "squirrel" }, { emoji: "🦘", word: "kangaroo" },
+        // Food & drink
+        { emoji: "🍎", word: "apple" }, { emoji: "🍌", word: "banana" },
+        { emoji: "🍊", word: "orange" }, { emoji: "🍇", word: "grapes" },
+        { emoji: "🍓", word: "strawberry" }, { emoji: "🍉", word: "watermelon" },
+        { emoji: "🍒", word: "cherries" }, { emoji: "🍍", word: "pineapple" },
+        { emoji: "🥕", word: "carrot" }, { emoji: "🌽", word: "corn" },
+        { emoji: "🥔", word: "potato" }, { emoji: "🍅", word: "tomato" },
+        { emoji: "🥦", word: "broccoli" }, { emoji: "🍞", word: "bread" },
+        { emoji: "🧀", word: "cheese" }, { emoji: "🥚", word: "egg" },
+        { emoji: "🍔", word: "burger" }, { emoji: "🍕", word: "pizza" },
+        { emoji: "🌭", word: "hotdog" }, { emoji: "🥪", word: "sandwich" },
+        { emoji: "🌮", word: "taco" }, { emoji: "🍝", word: "pasta" },
+        { emoji: "🍣", word: "sushi" }, { emoji: "🍦", word: "ice cream" },
+        { emoji: "🍩", word: "donut" }, { emoji: "🍪", word: "cookie" },
+        { emoji: "🎂", word: "cake" }, { emoji: "🍫", word: "chocolate" },
+        { emoji: "🍬", word: "candy" }, { emoji: "🥛", word: "milk" },
+        { emoji: "☕", word: "coffee" }, { emoji: "🍵", word: "tea" },
+        { emoji: "🧃", word: "juice" },
+        // Nature & weather
+        { emoji: "☀️", word: "sun" }, { emoji: "🌙", word: "moon" },
+        { emoji: "⭐", word: "star" }, { emoji: "☁️", word: "cloud" },
+        { emoji: "🌧️", word: "rain" }, { emoji: "❄️", word: "snow" },
+        { emoji: "⚡", word: "lightning" }, { emoji: "🌈", word: "rainbow" },
+        { emoji: "🔥", word: "fire" }, { emoji: "💧", word: "water" },
+        { emoji: "🌳", word: "tree" }, { emoji: "🌸", word: "flower" },
+        { emoji: "⛰️", word: "mountain" }, { emoji: "🏖️", word: "beach" },
+        // Vehicles & places
+        { emoji: "🚗", word: "car" }, { emoji: "🚌", word: "bus" },
+        { emoji: "🚲", word: "bicycle" }, { emoji: "✈️", word: "airplane" },
+        { emoji: "🚂", word: "train" }, { emoji: "⛵", word: "boat" },
+        { emoji: "🏠", word: "house" }, { emoji: "🏫", word: "school" },
+        { emoji: "🏥", word: "hospital" },
+        // Everyday objects & toys
+        { emoji: "🏀", word: "ball" }, { emoji: "🧸", word: "teddy bear" },
+        { emoji: "🎈", word: "balloon" }, { emoji: "🎁", word: "gift" },
+        { emoji: "📚", word: "book" }, { emoji: "🖍️", word: "crayon" },
+        { emoji: "✏️", word: "pencil" }, { emoji: "🎨", word: "paint" },
+        { emoji: "🎵", word: "music" }, { emoji: "📱", word: "phone" },
+        { emoji: "🔑", word: "key" }, { emoji: "🎩", word: "hat" },
+        { emoji: "🧦", word: "socks" }, { emoji: "👟", word: "shoe" },
+        { emoji: "⏰", word: "clock" },
+        // Body
+        { emoji: "👁️", word: "eye" }, { emoji: "👂", word: "ear" },
+        { emoji: "👃", word: "nose" }, { emoji: "👄", word: "mouth" },
+        { emoji: "🦷", word: "tooth" }, { emoji: "🖐️", word: "hand" },
+        { emoji: "🦶", word: "foot" }, { emoji: "💪", word: "strong" },
+        // People & family
+        { emoji: "👶", word: "baby" }, { emoji: "👧", word: "girl" },
+        { emoji: "👦", word: "boy" }, { emoji: "👩", word: "mom" },
+        { emoji: "👨", word: "dad" }, { emoji: "👵", word: "grandma" },
+        { emoji: "👴", word: "grandpa" }, { emoji: "👪", word: "family" },
+        { emoji: "👫", word: "friend" },
+        // Activities
+        { emoji: "⚾", word: "baseball" }, { emoji: "🏈", word: "football" },
+        { emoji: "🏊", word: "swim" }, { emoji: "🎸", word: "guitar" },
+        { emoji: "🎹", word: "piano" }, { emoji: "🥁", word: "drum" },
+        { emoji: "🧩", word: "puzzle" }, { emoji: "🎮", word: "game" },
+        { emoji: "🛌", word: "sleep" }, { emoji: "🛁", word: "bath" },
+        { emoji: "🧼", word: "soap" },
+      ],
     },
     {
       id: "words",
@@ -144,10 +240,18 @@
     },
   ];
 
-  // Flat index of every item across every category, for the browse search.
-  const ALL_ITEMS = NAV_BLOCKS.flatMap((block) =>
-    block.items.map((item) => ({ item, block }))
-  );
+  // Multiplies onto rate/pitch when "Apply Mood Modifiers" is on, keyed by
+  // mood id and state (1 = negative, 2 = positive). Missing rate/pitch
+  // means that axis doesn't touch that parameter. Active moods stack
+  // (multiply together), per axis.
+  const MOOD_MODIFIERS = {
+    hunger: { neg: { rate: 0.95 }, pos: { rate: 1.05 } },
+    thirst: { neg: { rate: 0.95 }, pos: { rate: 1.05 } },
+    sadness: { neg: { rate: 0.95, pitch: 0.95 }, pos: { rate: 1.05, pitch: 1.05 } },
+    anger: { neg: { pitch: 0.9 }, pos: { pitch: 1.1 } },
+    nerves: { neg: { pitch: 1.1, rate: 0.9 }, pos: { pitch: 1.1, rate: 1.1 } },
+    pain: { neg: { pitch: 0.9 }, pos: { pitch: 1.1, rate: 1.1 } },
+  };
 
   /* ---------------- Storage helpers ---------------- */
 
@@ -171,7 +275,7 @@
   /* ---------------- Settings (voice, rate, pitch, volume) ---------------- */
 
   const settings = Object.assign(
-    { rate: 1, pitch: 1, volume: 1, voiceURI: "" },
+    { rate: 1, pitch: 1, volume: 1, voiceURI: "", applyMoodModifiers: false },
     loadJSON(LS_SETTINGS, {})
   );
 
@@ -232,6 +336,7 @@
   const rateOutput = document.getElementById("rate-output");
   const pitchOutput = document.getElementById("pitch-output");
   const volumeOutput = document.getElementById("volume-output");
+  const moodModifiersToggle = document.getElementById("mood-modifiers-toggle");
   const testVoiceBtn = document.getElementById("test-voice-btn");
   const exportBtn = document.getElementById("export-btn");
   const importBtn = document.getElementById("import-btn");
@@ -239,9 +344,7 @@
 
   const navBackdrop = document.getElementById("nav-backdrop");
   const navSearch = document.getElementById("nav-search");
-  const navFrequentSection = document.getElementById("nav-frequent-section");
   const navFrequentRow = document.getElementById("nav-frequent-row");
-  const navCategorySection = document.getElementById("nav-category-section");
   const navCategoryTabs = document.getElementById("nav-category-tabs");
   const navPopoutGrid = document.getElementById("nav-popout-grid");
 
@@ -270,6 +373,27 @@
     voiceSelect.value = settings.voiceURI || "";
   }
 
+  function clamp(value, min, max) {
+    return Math.min(max, Math.max(min, value));
+  }
+
+  // Combined rate/pitch multiplier from every currently-active mood, only
+  // when "Apply Mood Modifiers" is on. Multiple active moods stack.
+  function moodMultipliers() {
+    let rate = 1;
+    let pitch = 1;
+    if (!settings.applyMoodModifiers) return { rate, pitch };
+    MOODS.forEach((m) => {
+      const state = moodState[m.id];
+      if (!state) return; // 0 = off, no modifier
+      const mod = MOOD_MODIFIERS[m.id] && MOOD_MODIFIERS[m.id][state === 1 ? "neg" : "pos"];
+      if (!mod) return;
+      if (mod.rate) rate *= mod.rate;
+      if (mod.pitch) pitch *= mod.pitch;
+    });
+    return { rate, pitch };
+  }
+
   function speak(text) {
     if (!text.trim()) return;
     if (!synth) {
@@ -280,8 +404,9 @@
     const utter = new SpeechSynthesisUtterance(text);
     const chosenVoice = voices.find((v) => v.voiceURI === settings.voiceURI);
     if (chosenVoice) utter.voice = chosenVoice;
-    utter.rate = settings.rate;
-    utter.pitch = settings.pitch;
+    const mood = moodMultipliers();
+    utter.rate = clamp(settings.rate * mood.rate, 0.3, 3);
+    utter.pitch = clamp(settings.pitch * mood.pitch, 0, 2);
     utter.volume = settings.volume;
     synth.speak(utter);
   }
@@ -404,21 +529,27 @@
     return btn;
   }
 
+  function activeBlock() {
+    return NAV_BLOCKS.find((b) => b.id === navState.activeBlockId) || NAV_BLOCKS[0];
+  }
+
   // Opens the shared browse pop-over, pre-selecting one category's tab.
   function openNavPopover(block) {
     navState.activeBlockId = block.id;
     navState.query = "";
     navSearch.value = "";
-    toggleNavSearchMode(false);
+    updateNavSearchPlaceholder();
     renderNavCategoryTabs();
     renderNavFrequentRow();
     renderNavGrid();
     openPopover(navBackdrop);
   }
 
-  function toggleNavSearchMode(isSearching) {
-    navFrequentSection.hidden = isSearching;
-    navCategorySection.hidden = isSearching;
+  // Search is scoped to whichever category tab is active — searching
+  // "within Sentences" only ever matches Sentences, never Words or
+  // Numbers — so the placeholder says so and switching tabs clears it.
+  function updateNavSearchPlaceholder() {
+    navSearch.placeholder = `Search ${activeBlock().label}…`;
   }
 
   function renderNavCategoryTabs() {
@@ -431,6 +562,9 @@
       btn.innerHTML = `<span>${block.icon}</span><span>${block.label}</span>`;
       btn.addEventListener("click", () => {
         navState.activeBlockId = block.id;
+        navState.query = "";
+        navSearch.value = "";
+        updateNavSearchPlaceholder();
         renderNavCategoryTabs();
         renderNavFrequentRow();
         renderNavGrid();
@@ -440,13 +574,16 @@
   }
 
   // "Most used" here is scoped to the active category: only usage entries
-  // whose text matches one of that category's own items count, so this
-  // row is specific to what you're currently browsing rather than a
-  // repeat of the home screen's global suggestions.
+  // whose text matches one of that category's own items (including its
+  // hidden, search-only ones) count, so this row is specific to what
+  // you're currently browsing rather than a repeat of the home screen's
+  // global suggestions.
   function renderNavFrequentRow() {
     navFrequentRow.innerHTML = "";
-    const block = NAV_BLOCKS.find((b) => b.id === navState.activeBlockId);
-    const categoryLabels = new Set(block.items.map((item) => itemLabel(item).toLowerCase()));
+    const block = activeBlock();
+    const categoryLabels = new Set(
+      block.items.concat(block.hiddenItems || []).map((item) => itemLabel(item).toLowerCase())
+    );
     const top = Object.values(usage)
       .filter((entry) => categoryLabels.has(entry.display.toLowerCase()))
       .sort((a, b) => b.count - a.count)
@@ -463,27 +600,20 @@
     top.forEach((text) => navFrequentRow.appendChild(makeChip(text, false)));
   }
 
-  // Shows either the active category's items, or — while searching — every
-  // matching item across all categories, tinted by its home category color.
+  // Shows the active category's visible items, or — while searching —
+  // whichever of that SAME category's items (visible plus its hidden,
+  // search-only ones) match the query. Never reaches into other categories.
   function renderNavGrid() {
     navPopoutGrid.innerHTML = "";
+    const block = activeBlock();
     let items;
     if (navState.query) {
-      const matches = ALL_ITEMS.filter((entry) =>
-        itemLabel(entry.item).toLowerCase().includes(navState.query)
-      );
-      items = matches.map((entry) => entry.item);
-      matches.forEach((entry) => {
-        const chip = makeItemChip(entry.item, entry.block);
-        chip.style.borderLeftWidth = "6px";
-        chip.style.borderLeftColor = entry.block.color;
-        navPopoutGrid.appendChild(chip);
-      });
+      const pool = block.items.concat(block.hiddenItems || []);
+      items = pool.filter((item) => itemLabel(item).toLowerCase().includes(navState.query));
     } else {
-      const block = NAV_BLOCKS.find((b) => b.id === navState.activeBlockId) || NAV_BLOCKS[0];
       items = block.items;
-      items.forEach((item) => navPopoutGrid.appendChild(makeItemChip(item, block)));
     }
+    items.forEach((item) => navPopoutGrid.appendChild(makeItemChip(item, block)));
     applyAdaptiveColumns(navPopoutGrid, items);
   }
 
@@ -528,7 +658,6 @@
 
   navSearch.addEventListener("input", () => {
     navState.query = navSearch.value.trim().toLowerCase();
-    toggleNavSearchMode(!!navState.query);
     renderNavGrid();
   });
 
@@ -582,6 +711,7 @@
     rateOutput.textContent = `${Number(settings.rate).toFixed(2)}×`;
     pitchOutput.textContent = Number(settings.pitch).toFixed(2);
     volumeOutput.textContent = `${Math.round(settings.volume * 100)}%`;
+    moodModifiersToggle.checked = !!settings.applyMoodModifiers;
   }
 
   settingsBtn.addEventListener("click", () => {
@@ -609,6 +739,11 @@
 
   voiceSelect.addEventListener("change", () => {
     settings.voiceURI = voiceSelect.value;
+    saveSettings();
+  });
+
+  moodModifiersToggle.addEventListener("change", () => {
+    settings.applyMoodModifiers = moodModifiersToggle.checked;
     saveSettings();
   });
 
