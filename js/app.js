@@ -516,8 +516,13 @@
       if (width > maxChipWidth) maxChipWidth = width;
     });
 
-    const containerWidth = grid.clientWidth || Math.min(window.innerWidth, 640) - 28;
-    const cols = Math.max(1, Math.min(5, Math.floor((containerWidth + gap) / (maxChipWidth + gap))));
+    // 900 matches .popout's own max-width (see style.css) — kept in sync
+    // manually since this is the one place JS needs that number.
+    const containerWidth = grid.clientWidth || Math.min(window.innerWidth, 900) - 28;
+    const colsThatFit = Math.floor((containerWidth + gap) / (maxChipWidth + gap));
+    // Cap at the item count too — no point spreading 11 numbers across 14
+    // computed columns and leaving a mostly-empty trailing track.
+    const cols = Math.max(1, Math.min(colsThatFit, items.length, 10));
     grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
   }
 

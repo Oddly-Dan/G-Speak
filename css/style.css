@@ -281,7 +281,10 @@ main {
 .popout {
   background: var(--panel);
   width: 100%;
-  max-width: 640px;
+  /* Matches #app's own content width so the popover uses exactly as much
+     room as the rest of the UI already does — no more, no less — instead
+     of an arbitrary narrower cap that wasted space on tablets/desktop. */
+  max-width: 900px;
   max-height: 100%;
   overflow-y: auto;
   overflow-x: hidden;
