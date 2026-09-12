@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 <!doctype html>
 <html lang="en">
 <head>
@@ -72,18 +73,44 @@
           <input type="range" id="volume-range" min="0" max="1" step="0.05" value="1" />
         </label>
         <button id="test-voice-btn" class="btn btn-secondary" type="button">🔊 Test voice</button>
+
+        <div class="settings-divider" role="separator"></div>
+
+        <h3 class="popout-subtitle">Backup</h3>
+        <p class="popout-hint">
+          Settings, moods, and your most-used words all live only on this
+          device. Export them to keep a backup or move to another device.
+        </p>
+        <div class="settings-actions">
+          <button id="export-btn" class="btn btn-secondary" type="button">📤 Export settings</button>
+          <button id="import-btn" class="btn btn-secondary" type="button">📥 Import settings</button>
+        </div>
+        <input type="file" id="import-file-input" accept="application/json" hidden />
       </div>
     </div>
   </div>
 
-  <!-- ===================== NAV CATEGORY POPOVER ===================== -->
+  <!-- ===================== NAV / BROWSE POPOVER ===================== -->
   <div class="backdrop" id="nav-backdrop" hidden>
-    <div class="popout nav-popout" id="nav-popout" role="dialog" aria-label="Category items">
+    <div class="popout nav-popout" id="nav-popout" role="dialog" aria-label="Browse words and sentences">
       <div class="popout-header">
-        <h2 id="nav-popout-title"></h2>
+        <h2>🔎 Browse</h2>
         <button class="icon-btn" type="button" data-close="nav" aria-label="Close">✕</button>
       </div>
       <div class="popout-body">
+        <input type="search" id="nav-search" class="nav-search" autocomplete="off"
+               placeholder="Search words &amp; sentences…" aria-label="Search words and sentences" />
+
+        <div class="nav-section" id="nav-frequent-section">
+          <h3 class="nav-section-title">⭐ Most used</h3>
+          <div class="chip-row" id="nav-frequent-row"></div>
+        </div>
+
+        <div class="nav-section" id="nav-category-section">
+          <h3 class="nav-section-title">Categories</h3>
+          <div class="category-tab-row" id="nav-category-tabs"></div>
+        </div>
+
         <div class="item-grid" id="nav-popout-grid"></div>
       </div>
     </div>

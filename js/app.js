@@ -1,4 +1,5 @@
-/* ============================================================
+/* SPDX-License-Identifier: GPL-3.0-or-later
+   ============================================================
    G-Speak — minimal text-to-speech communication app.
    Vanilla JS, no build step, no external libraries.
    Uses the browser's native Web Speech API + localStorage.
@@ -37,20 +38,43 @@
   // the whole sentence bar (used for complete sentences).
   const NAV_BLOCKS = [
     {
+      // Real AAC symbol sets (PCS, SymbolStix, etc.) are licensed and cost
+      // money — this is a free way to bootstrap the same idea with plain
+      // Unicode emoji standing in for a symbol. Every item here MUST carry
+      // an icon (unlike the other, word-only-friendly categories), and the
+      // vocabulary itself is aimed at a young/early communicator: pronouns,
+      // core requesting words, and basic feelings, roughly a 3-5 year old
+      // level. Icons are chosen for their common *meaning* as a symbol
+      // (➡️ = "go", 👤 = "I") rather than their literal picture.
       id: "emoji",
       label: "Emoji-Speak",
       icon: "😀",
       color: "#f4a300",
       mode: "append",
       items: [
+        // Pronouns
+        { emoji: "👤", word: "I" }, { emoji: "🫵", word: "you" },
+        { emoji: "🙋", word: "we" },
+        // Core requesting / interaction words
+        { emoji: "➡️", word: "go" }, { emoji: "✋", word: "stop" },
+        { emoji: "👉", word: "want" }, { emoji: "➕", word: "more" },
+        { emoji: "✅", word: "done" }, { emoji: "🆘", word: "help" },
+        { emoji: "👀", word: "look" }, { emoji: "🤲", word: "give me" },
+        { emoji: "🍽️", word: "eat" }, { emoji: "🥤", word: "drink" },
+        { emoji: "⚽", word: "play" }, { emoji: "🚪", word: "open" },
+        { emoji: "🔒", word: "close" },
+        // Directions
+        { emoji: "⬆️", word: "up" }, { emoji: "⬇️", word: "down" },
+        { emoji: "📥", word: "in" }, { emoji: "📤", word: "out" },
+        // Feelings
         { emoji: "😀", word: "happy" }, { emoji: "😢", word: "sad" },
-        { emoji: "😡", word: "angry" }, { emoji: "😴", word: "tired" },
-        { emoji: "❤️", word: "love" }, { emoji: "👍", word: "yes" },
-        { emoji: "👎", word: "no" }, { emoji: "🙏", word: "please" },
-        { emoji: "🤒", word: "sick" }, { emoji: "😨", word: "scared" },
-        { emoji: "😂", word: "funny" }, { emoji: "😮", word: "surprised" },
-        { emoji: "🥵", word: "hot" }, { emoji: "🥶", word: "cold" },
-        { emoji: "🤕", word: "hurt" }, { emoji: "👋", word: "hello" },
+        { emoji: "😠", word: "mad" }, { emoji: "🤕", word: "hurt" },
+        { emoji: "😨", word: "scared" }, { emoji: "😴", word: "tired" },
+        // Social / manners
+        { emoji: "👋", word: "hi" }, { emoji: "🚶", word: "bye" },
+        { emoji: "🙏", word: "please" }, { emoji: "🙌", word: "thank you" },
+        { emoji: "😔", word: "sorry" }, { emoji: "👍", word: "yes" },
+        { emoji: "👎", word: "no" },
       ],
     },
     {
@@ -116,6 +140,11 @@
       ],
     },
   ];
+
+  // Flat index of every item across every category, for the browse search.
+  const ALL_ITEMS = NAV_BLOCKS.flatMap((block) =>
+    block.items.map((item) => ({ item, block }))
+  );
 
   /* ---------------- Storage helpers ---------------- */
 
@@ -199,10 +228,20 @@
   const pitchOutput = document.getElementById("pitch-output");
   const volumeOutput = document.getElementById("volume-output");
   const testVoiceBtn = document.getElementById("test-voice-btn");
+  const exportBtn = document.getElementById("export-btn");
+  const importBtn = document.getElementById("import-btn");
+  const importFileInput = document.getElementById("import-file-input");
 
   const navBackdrop = document.getElementById("nav-backdrop");
-  const navPopoutTitle = document.getElementById("nav-popout-title");
+  const navSearch = document.getElementById("nav-search");
+  const navFrequentSection = document.getElementById("nav-frequent-section");
+  const navFrequentRow = document.getElementById("nav-frequent-row");
+  const navCategorySection = document.getElementById("nav-category-section");
+  const navCategoryTabs = document.getElementById("nav-category-tabs");
   const navPopoutGrid = document.getElementById("nav-popout-grid");
+
+  // Which category tab is selected, and the current search text (lowercased).
+  const navState = { activeBlockId: NAV_BLOCKS[0].id, query: "" };
 
   /* ---------------- Speech ---------------- */
 
@@ -330,31 +369,102 @@
     });
   }
 
-  function openNavPopover(block) {
-    navPopoutTitle.textContent = `${block.icon} ${block.label}`;
-    navPopoutGrid.innerHTML = "";
-    block.items.forEach((item) => {
-      const isObj = typeof item === "object";
-      const label = isObj ? item.word : item;
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.className = "item-chip";
-      btn.innerHTML = isObj
-        ? `<span class="item-emoji">${item.emoji}</span><span>${item.word}</span>`
-        : `<span>${item}</span>`;
-      btn.addEventListener("click", () => {
-        if (block.mode === "replace") {
-          sentenceBar.value = label;
-          sentenceBar.focus();
-          closePopover(navBackdrop);
-        } else {
-          appendToSentence(label);
-        }
-      });
-      navPopoutGrid.appendChild(btn);
+  function itemLabel(item) {
+    return typeof item === "object" ? item.word : item;
+  }
+
+  function makeItemChip(item, block) {
+    const isObj = typeof item === "object";
+    const label = itemLabel(item);
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "item-chip";
+    btn.innerHTML = isObj
+      ? `<span class="item-emoji">${item.emoji}</span><span>${item.word}</span>`
+      : `<span>${item}</span>`;
+    btn.addEventListener("click", () => {
+      if (block.mode === "replace") {
+        sentenceBar.value = label;
+        sentenceBar.focus();
+        closePopover(navBackdrop);
+      } else {
+        appendToSentence(label);
+      }
     });
+    return btn;
+  }
+
+  // Opens the shared browse pop-over, pre-selecting one category's tab.
+  function openNavPopover(block) {
+    navState.activeBlockId = block.id;
+    navState.query = "";
+    navSearch.value = "";
+    toggleNavSearchMode(false);
+    renderNavCategoryTabs();
+    renderNavFrequentRow();
+    renderNavGrid();
     openPopover(navBackdrop);
   }
+
+  function toggleNavSearchMode(isSearching) {
+    navFrequentSection.hidden = isSearching;
+    navCategorySection.hidden = isSearching;
+  }
+
+  function renderNavCategoryTabs() {
+    navCategoryTabs.innerHTML = "";
+    NAV_BLOCKS.forEach((block) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "category-tab" + (block.id === navState.activeBlockId ? " active" : "");
+      btn.style.background = block.color;
+      btn.innerHTML = `<span>${block.icon}</span><span>${block.label}</span>`;
+      btn.addEventListener("click", () => {
+        navState.activeBlockId = block.id;
+        renderNavCategoryTabs();
+        renderNavGrid();
+      });
+      navCategoryTabs.appendChild(btn);
+    });
+  }
+
+  function renderNavFrequentRow() {
+    navFrequentRow.innerHTML = "";
+    const top = topUsageEntries(10);
+    if (!top.length) {
+      const hint = document.createElement("p");
+      hint.className = "nav-empty-hint";
+      hint.textContent = "Words you speak often will show up here.";
+      navFrequentRow.appendChild(hint);
+      return;
+    }
+    top.forEach((text) => navFrequentRow.appendChild(makeChip(text, false)));
+  }
+
+  // Shows either the active category's items, or — while searching — every
+  // matching item across all categories, tinted by its home category color.
+  function renderNavGrid() {
+    navPopoutGrid.innerHTML = "";
+    if (navState.query) {
+      ALL_ITEMS
+        .filter((entry) => itemLabel(entry.item).toLowerCase().includes(navState.query))
+        .forEach((entry) => {
+          const chip = makeItemChip(entry.item, entry.block);
+          chip.style.borderLeftWidth = "6px";
+          chip.style.borderLeftColor = entry.block.color;
+          navPopoutGrid.appendChild(chip);
+        });
+    } else {
+      const block = NAV_BLOCKS.find((b) => b.id === navState.activeBlockId) || NAV_BLOCKS[0];
+      block.items.forEach((item) => navPopoutGrid.appendChild(makeItemChip(item, block)));
+    }
+  }
+
+  navSearch.addEventListener("input", () => {
+    navState.query = navSearch.value.trim().toLowerCase();
+    toggleNavSearchMode(!!navState.query);
+    renderNavGrid();
+  });
 
   /* ---------------- Popover helpers ---------------- */
 
@@ -419,6 +529,85 @@
   });
 
   testVoiceBtn.addEventListener("click", () => speak("Hi! This is how I sound."));
+
+  /* ---------------- Import / export (backup) ---------------- */
+
+  exportBtn.addEventListener("click", () => {
+    const payload = {
+      app: "g-speak",
+      version: 1,
+      exportedAt: new Date().toISOString(),
+      settings,
+      usage,
+      moods: moodState,
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `gspeak-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  });
+
+  importBtn.addEventListener("click", () => importFileInput.click());
+
+  importFileInput.addEventListener("change", () => {
+    const file = importFileInput.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      let data;
+      try {
+        data = JSON.parse(String(reader.result));
+      } catch (e) {
+        data = null;
+      }
+      const looksValid = data && typeof data === "object" && (data.settings || data.usage || data.moods);
+      if (!looksValid) {
+        alert("That file doesn't look like a valid G-Speak backup.");
+        importFileInput.value = "";
+        return;
+      }
+      const ok = confirm(
+        "This will replace the voice settings, moods, and most-used words currently saved on this device. Continue?"
+      );
+      if (!ok) {
+        importFileInput.value = "";
+        return;
+      }
+
+      if (data.settings && typeof data.settings === "object") {
+        Object.assign(settings, data.settings);
+      }
+      if (data.moods && typeof data.moods === "object") {
+        Object.keys(moodState).forEach((k) => delete moodState[k]);
+        Object.assign(moodState, data.moods);
+        MOODS.forEach((m) => {
+          if (typeof moodState[m.id] !== "number") moodState[m.id] = 0;
+        });
+      }
+      if (data.usage && typeof data.usage === "object") {
+        Object.keys(usage).forEach((k) => delete usage[k]);
+        Object.assign(usage, data.usage);
+      }
+
+      saveSettings();
+      saveMoods();
+      saveJSON(LS_USAGE, usage);
+
+      applySettingsToControls();
+      refreshVoices();
+      renderSuggestions();
+      renderMoods();
+      importFileInput.value = "";
+      alert("Import complete!");
+    };
+    reader.readAsText(file);
+  });
 
   /* ---------------- Main sentence bar + speak wiring ---------------- */
 
