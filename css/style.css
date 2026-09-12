@@ -43,6 +43,12 @@ button {
   gap: 10px;
 }
 
+main {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
 /* ---------- Header (kept deliberately small — the cog is rarely used) ---------- */
 .topbar {
   display: flex;
