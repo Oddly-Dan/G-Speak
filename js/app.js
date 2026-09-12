@@ -467,19 +467,58 @@
   // matching item across all categories, tinted by its home category color.
   function renderNavGrid() {
     navPopoutGrid.innerHTML = "";
+    let items;
     if (navState.query) {
-      ALL_ITEMS
-        .filter((entry) => itemLabel(entry.item).toLowerCase().includes(navState.query))
-        .forEach((entry) => {
-          const chip = makeItemChip(entry.item, entry.block);
-          chip.style.borderLeftWidth = "6px";
-          chip.style.borderLeftColor = entry.block.color;
-          navPopoutGrid.appendChild(chip);
-        });
+      const matches = ALL_ITEMS.filter((entry) =>
+        itemLabel(entry.item).toLowerCase().includes(navState.query)
+      );
+      items = matches.map((entry) => entry.item);
+      matches.forEach((entry) => {
+        const chip = makeItemChip(entry.item, entry.block);
+        chip.style.borderLeftWidth = "6px";
+        chip.style.borderLeftColor = entry.block.color;
+        navPopoutGrid.appendChild(chip);
+      });
     } else {
       const block = NAV_BLOCKS.find((b) => b.id === navState.activeBlockId) || NAV_BLOCKS[0];
-      block.items.forEach((item) => navPopoutGrid.appendChild(makeItemChip(item, block)));
+      items = block.items;
+      items.forEach((item) => navPopoutGrid.appendChild(makeItemChip(item, block)));
     }
+    applyAdaptiveColumns(navPopoutGrid, items);
+  }
+
+  // A plain fixed-width auto-fill grid can't tell "Words" (short items —
+  // fits 3+ per row) apart from "Sentences" (long ones — fits 1-2): the
+  // CSS auto-repeat count can't be computed from intrinsic content sizing
+  // like max-content. So instead we measure this set's own labels with a
+  // canvas (using the item-chip's real, already-rendered font) and pick
+  // however many columns of that width actually fit the popover.
+  const measureCanvas = document.createElement("canvas");
+  const measureCtx = measureCanvas.getContext("2d");
+
+  function applyAdaptiveColumns(grid, items) {
+    if (!items.length) return;
+    const sample = grid.querySelector(".item-chip");
+    const font = sample
+      ? getComputedStyle(sample).font
+      : '700 12.75px -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
+    measureCtx.font = font;
+
+    const chipChrome = 22; // item-chip's own horizontal padding + border
+    const gap = 8;
+    let maxChipWidth = 60;
+    items.forEach((item) => {
+      const isObj = typeof item === "object";
+      const textWidth = measureCtx.measureText(itemLabel(item)).width;
+      // Emoji sits on its own line above the text (flex-direction: column),
+      // so it only matters when it's wider than the text itself.
+      const width = Math.max(textWidth, isObj ? 22 : 0) + chipChrome;
+      if (width > maxChipWidth) maxChipWidth = width;
+    });
+
+    const containerWidth = grid.clientWidth || Math.min(window.innerWidth, 640) - 28;
+    const cols = Math.max(1, Math.min(5, Math.floor((containerWidth + gap) / (maxChipWidth + gap))));
+    grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
   }
 
   navSearch.addEventListener("input", () => {
@@ -526,6 +565,7 @@
     [settingsBackdrop, navBackdrop].forEach((backdrop) => {
       if (!backdrop.hidden) repositionBackdrop(backdrop);
     });
+    if (!navBackdrop.hidden) renderNavGrid();
   });
 
   /* ---------------- Settings popover wiring ---------------- */

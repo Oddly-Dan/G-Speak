@@ -429,9 +429,13 @@ main {
   white-space: nowrap;
 }
 
+/* Column count is set from JS per render (see applyAdaptiveColumns), based
+   on how wide this category's own labels actually are — short items pack
+   three-plus per row, long ones fall back to one or two. This is just the
+   fallback before JS runs. */
 .item-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
   gap: 8px;
 }
 
@@ -456,7 +460,6 @@ main {
 /* ---------- Responsive ---------- */
 @media (min-width: 560px) {
   .fastnav { grid-template-columns: repeat(6, 1fr); }
-  .item-grid { grid-template-columns: repeat(3, 1fr); }
 }
 
 @media (min-width: 720px) {
