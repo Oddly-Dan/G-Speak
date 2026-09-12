@@ -64,6 +64,12 @@ button {
   letter-spacing: 0.02em;
 }
 
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .icon-btn {
   border: none;
   background: var(--panel);
@@ -142,12 +148,20 @@ button {
   box-shadow: 0 0 0 var(--green-dark);
 }
 
-/* ---------- Suggestions ---------- */
+/* ---------- Suggestions ----------
+   Single-line, swipeable rows: content past the container's edge is
+   simply clipped rather than wrapping to a second line or spilling out. */
 .chip-row {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  overflow-y: hidden;
   gap: 6px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
+
+.chip-row::-webkit-scrollbar { display: none; }
 
 .chip {
   flex: 0 0 auto;
@@ -175,11 +189,18 @@ button {
 /* ---------- Moods ---------- */
 .mood-row {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  overflow-y: hidden;
   gap: 6px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
+.mood-row::-webkit-scrollbar { display: none; }
+
 .mood-toggle {
+  flex: 0 0 auto;
   border: 2px solid var(--border);
   background: var(--panel);
   border-radius: 999px;
@@ -234,7 +255,13 @@ button {
 /* ---------- Popovers ---------- */
 .backdrop {
   position: fixed;
-  inset: 0;
+  /* top is set from JS so this box always starts just below the sentence
+     area — it never covers or blocks it, whatever the header/sentence
+     bar's actual rendered height is. */
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
   background: rgba(20, 24, 34, 0.35);
   display: flex;
   align-items: flex-end;
@@ -249,7 +276,7 @@ button {
   background: var(--panel);
   width: 100%;
   max-width: 640px;
-  max-height: 82vh;
+  max-height: 100%;
   overflow-y: auto;
   overflow-x: hidden;
   border-radius: 20px 20px 0 0;
@@ -355,10 +382,7 @@ button {
   color: var(--ink-soft);
 }
 
-/* Single-line, swipeable rows: content past the popover's edge is simply
-   clipped rather than wrapping to a second line or spilling out. */
-.category-tab-row,
-#nav-frequent-row {
+.category-tab-row {
   display: flex;
   flex-wrap: nowrap;
   overflow-x: auto;
@@ -368,10 +392,7 @@ button {
   -ms-overflow-style: none;
 }
 
-.category-tab-row::-webkit-scrollbar,
-#nav-frequent-row::-webkit-scrollbar {
-  display: none;
-}
+.category-tab-row::-webkit-scrollbar { display: none; }
 
 .category-tab {
   flex: 0 0 auto;

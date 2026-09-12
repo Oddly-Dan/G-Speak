@@ -23,14 +23,17 @@
 
   const MAX_DYNAMIC_SUGGESTIONS = 8;
 
-  // Ternary mood toggles: state 0 = off, 1 = negative, 2 = positive.
+  // Ternary mood toggles: state 0 = off, 1 = negative, 2 = positive. The
+  // "off" state shows the same icon as "negative" (just without the tint
+  // or label change) so each pill has its own distinct resting icon
+  // instead of a generic, indistinguishable 😐 for all six.
   const MOODS = [
-    { id: "hunger", off: "😐", neg: "🍽️", pos: "😋", negLabel: "Hungry", posLabel: "Full" },
-    { id: "thirst", off: "😐", neg: "🥵", pos: "💧", negLabel: "Thirsty", posLabel: "Hydrated" },
-    { id: "sadness", off: "😐", neg: "😢", pos: "😊", negLabel: "Sad", posLabel: "Happy" },
-    { id: "anger", off: "😐", neg: "😠", pos: "🤩", negLabel: "Mad", posLabel: "Joyful" },
-    { id: "nerves", off: "😐", neg: "😰", pos: "🤗", negLabel: "Nervous", posLabel: "Excited" },
-    { id: "pain", off: "😐", neg: "🤕", pos: "💪", negLabel: "Hurt", posLabel: "Great" },
+    { id: "hunger", neg: "🍽️", pos: "😋", negLabel: "Hungry", posLabel: "Full" },
+    { id: "thirst", neg: "🥵", pos: "💧", negLabel: "Thirsty", posLabel: "Hydrated" },
+    { id: "sadness", neg: "😢", pos: "😊", negLabel: "Sad", posLabel: "Happy" },
+    { id: "anger", neg: "😠", pos: "🤩", negLabel: "Mad", posLabel: "Joyful" },
+    { id: "nerves", neg: "😰", pos: "🤗", negLabel: "Nervous", posLabel: "Excited" },
+    { id: "pain", neg: "🤕", pos: "💪", negLabel: "Hurt", posLabel: "Great" },
   ];
 
   // Fast-nav categories. Each has placeholder items to be built out later.
@@ -211,9 +214,11 @@
 
   /* ---------------- DOM refs ---------------- */
 
+  const sentenceArea = document.getElementById("sentence-area");
   const sentenceBar = document.getElementById("sentence-bar");
   const speakBtn = document.getElementById("speak-btn");
   const clearBtn = document.getElementById("clear-btn");
+  const keyboardBtn = document.getElementById("keyboard-btn");
   const suggestionsRow = document.getElementById("suggestions-row");
   const moodRow = document.getElementById("mood-row");
   const fastnav = document.getElementById("fastnav");
@@ -300,11 +305,13 @@
 
     suggestionsRow.innerHTML = "";
 
-    dynamic.slice(0, dynamicSlots).forEach((text) => {
-      suggestionsRow.appendChild(makeChip(text, false));
-    });
+    // Pinned words sit at the start of the row; the dynamic/learned
+    // suggestions follow after them.
     PINNED_WORDS.forEach((text) => {
       suggestionsRow.appendChild(makeChip(text, true));
+    });
+    dynamic.slice(0, dynamicSlots).forEach((text) => {
+      suggestionsRow.appendChild(makeChip(text, false));
     });
   }
 
@@ -350,7 +357,7 @@
     const state = moodState[m.id];
     btn.dataset.state = String(state);
     if (state === 0) {
-      btn.textContent = `${m.off} Off`;
+      btn.textContent = `${m.neg} Off`;
     } else if (state === 1) {
       btn.textContent = `${m.neg} ${m.negLabel}`;
     } else {
@@ -425,15 +432,27 @@
       btn.addEventListener("click", () => {
         navState.activeBlockId = block.id;
         renderNavCategoryTabs();
+        renderNavFrequentRow();
         renderNavGrid();
       });
       navCategoryTabs.appendChild(btn);
     });
   }
 
+  // "Most used" here is scoped to the active category: only usage entries
+  // whose text matches one of that category's own items count, so this
+  // row is specific to what you're currently browsing rather than a
+  // repeat of the home screen's global suggestions.
   function renderNavFrequentRow() {
     navFrequentRow.innerHTML = "";
-    const top = topUsageEntries(10);
+    const block = NAV_BLOCKS.find((b) => b.id === navState.activeBlockId);
+    const categoryLabels = new Set(block.items.map((item) => itemLabel(item).toLowerCase()));
+    const top = Object.values(usage)
+      .filter((entry) => categoryLabels.has(entry.display.toLowerCase()))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 10)
+      .map((e) => e.display);
+
     if (!top.length) {
       const hint = document.createElement("p");
       hint.className = "nav-empty-hint";
@@ -471,7 +490,18 @@
 
   /* ---------------- Popover helpers ---------------- */
 
+  // Popovers never cover the sentence bar: each backdrop's own box is
+  // shrunk to start just below it, rather than the usual full-screen
+  // inset. That leaves the sentence bar visible AND tappable (Speak,
+  // Clear, the bar itself) while a popover is open, since the backdrop
+  // simply doesn't occupy that strip of the screen anymore.
+  function repositionBackdrop(backdrop) {
+    const rect = sentenceArea.getBoundingClientRect();
+    backdrop.style.top = `${Math.max(0, Math.round(rect.bottom) + 4)}px`;
+  }
+
   function openPopover(backdrop) {
+    repositionBackdrop(backdrop);
     backdrop.hidden = false;
   }
 
@@ -489,6 +519,12 @@
   [settingsBackdrop, navBackdrop].forEach((backdrop) => {
     backdrop.addEventListener("click", (e) => {
       if (e.target === backdrop) closePopover(backdrop);
+    });
+  });
+
+  window.addEventListener("resize", () => {
+    [settingsBackdrop, navBackdrop].forEach((backdrop) => {
+      if (!backdrop.hidden) repositionBackdrop(backdrop);
     });
   });
 
@@ -635,6 +671,11 @@
   clearBtn.addEventListener("click", () => {
     sentenceBar.value = "";
   });
+
+  // The one deliberate, explicit way to summon the on-screen keyboard
+  // besides tapping the sentence bar directly — a visible hint for anyone
+  // who doesn't know tapping the bar itself works.
+  keyboardBtn.addEventListener("click", () => sentenceBar.focus());
 
   /* ---------------- Init ---------------- */
 
