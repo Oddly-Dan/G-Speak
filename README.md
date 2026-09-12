@@ -1,143 +1,86 @@
 # G-Speak
 
-A simple, minimal text-to-speech communication (AAC-style) app. No build
-step, no frameworks, no accounts or logins — just HTML, CSS, and vanilla
-JavaScript, using the browser's native Web Speech API for voice output and
-`localStorage` for per-device settings.
+A simple text-to-speech communication (AAC-style) app. No build step, no
+frameworks, no accounts or logins — just HTML, CSS, and vanilla
+JavaScript, using the browser's native Web Speech API for voice output
+and `localStorage` for per-device state. Nothing is ever sent anywhere;
+there's no backend.
 
 ## Running it
 
-There's nothing to build or install. Either:
+Nothing to build or install for the app itself. Either:
 
 - Open `index.html` directly in a browser, or
-- Serve the folder with any static file server, e.g. `npx serve .` or
-  `python3 -m http.server`, and visit it in your browser.
+- Serve the folder with any static file server (e.g. `python3 -m
+  http.server`) and visit it in your browser.
 
 Speech works best over `http(s)`/`file://` in Chrome, Edge, or Safari.
 Available voices depend on the device and OS.
 
-## What's here
+## Features
 
-- **Sentence bar** — large text box at the top. Tap it to bring up your
-  device's on-screen keyboard. Hit **Enter** or the big green **Speak!**
-  button to have it read aloud. The bar clears after speaking.
-- **Voice settings** — behind the ⚙️ cog icon: pick a voice, and adjust
-  speed, pitch, and volume, plus an **Apply Mood Modifiers** toggle (see
-  [Mood modifiers](#mood-modifiers)). Saved per device. The same pop-out
-  has **Export**/**Import** buttons to back up or restore everything
-  below (see [Backup](#backup)).
-- **Suggestions strip** — quick-tap words/phrases under the sentence bar.
-  Starts with `Hi, Greetings, Yes, No, Help`. `Yes`, `No`, and `Help`
-  (📌) always stay. The others are gradually replaced by whatever you
-  actually speak most often, tracked locally on the device.
-- **Mood toggles** — six ternary indicators (tap to cycle
-  Off → 🔴 → 🟢), e.g. Hungry/Full, Thirsty/Hydrated, Sad/Happy,
-  Mad/Joyful, Nervous/Excited, Hurt/Great. State is remembered per device.
-- **Fast nav** — six category tiles (Emoji-Speak, Words, Sentences,
-  Numbers, Needs, Things). Tapping one opens a shared **browse** pop-over:
-  a search box, a "⭐ Most used" row scoped to that category, and tabs to
-  jump between categories without closing and reopening. **Search is
-  scoped to whichever category tab is active** — searching while in
-  Sentences only ever matches Sentences, never Words or Numbers; switch
-  tabs (or use ⌨️/the sentence bar directly) to search a different one.
-  The goal is to reach almost anything in a couple of taps. Current
-  items are a starting set meant to be built out further — and are
-  customizable, see [Boards](#boards) below.
+- **Sentence bar** — tap it for your device's keyboard; **Enter** or the
+  green **Speak!** button reads it aloud and clears the bar.
+- **Suggestions strip** — quick-tap words under the sentence bar. `Yes`,
+  `No`, `Help` (📌) are pinned by default; others are learned from what
+  you actually speak. Press-and-hold any chip to pin/unpin it yourself.
+- **Mood toggles** — six ternary indicators (Off → negative → positive →
+  Off), e.g. Hungry/Full, Sad/Happy. Optionally (Settings → **Apply Mood
+  Modifiers**, off by default) active moods subtly, and stackably, shift
+  speaking rate/pitch — see the table in `js/app.js`'s `MOOD_MODIFIERS`.
+- **Fast nav** — six category boards (Emoji-Speak, Words, Sentences,
+  Numbers, Needs, Things). Tapping one opens a shared pop-over: a search
+  box **scoped to that category only**, a "Most used" row, and tabs to
+  switch categories without closing it.
+  - **Emoji-Speak** pairs plain Unicode emoji with a word each, aimed at
+    an early/young communicator (3-5yo) — a free alternative to the
+    licensed picture-symbol sets real AAC apps normally use. Its curated
+    grid is backed by a much larger hidden vocabulary (animals, food,
+    nature, everyday objects...) that's search-only until promoted.
+  - **Every board is customizable** by press-and-hold (~550ms, mouse or
+    touch): pin/unpin, remove, or add typed words/sentences/numbers and
+    promoted Emoji-Speak items. Settings → **Reset All Boards** restores
+    the defaults without touching voice settings, moods, or usage
+    history. See the doc comments above `boardItems()` in `js/app.js`
+    for the full model.
+- **Settings** (⚙️) — Appearance (Light/Dark/System), voice/speed/pitch/
+  volume, Apply Mood Modifiers, Export/Import (a `.json` backup of
+  settings, moods, usage, and board customizations), Reset All Boards.
 
-### Emoji-Speak
+## Theming
 
-Most real AAC (speech-assist) apps license a picture symbol set (PCS,
-SymbolStix, etc.), which costs money. **Emoji-Speak is a free way to
-bootstrap the same idea using plain Unicode emoji as stand-ins for those
-symbols.** It's the one category where every item *must* carry an icon
-(an icon is optional on every other category's items — some of Needs and
-Things already have one, most Words/Numbers/Sentences don't).
+Two independent layers:
 
-The vocabulary is aimed at an early/young communicator — roughly a
-3-5-year-old level — and favors the icon's common *meaning* over its
-literal picture: 👤 stands for "I", 🫵 for "you", ➡️ for "go" rather than
-"right". It's grouped as pronouns, core requesting words (go, stop, want,
-more, help, eat…), directions, basic feelings, and simple manners
-(hi/bye/please/thank you/sorry/yes/no).
+- **Light/Dark/System**, user-facing, in Settings → Appearance. Applies
+  instantly and persists per device.
+- **Branding**, for whoever deploys the app — no UI, just edit
+  **`js/theme.config.js`**: the title, header text, header logo/icon
+  (emoji, inline SVG, or an image), and palette overrides (any CSS
+  custom property from `css/style.css`'s `:root`, separately for light
+  and dark). The file is commented with the full option list and
+  composes correctly with the Light/Dark/System toggle — it isn't
+  reachable from the UI itself.
 
-On top of that visible grid, Emoji-Speak also carries a much larger set of
-plain, everyday emoji — animals, food, nature, vehicles, everyday objects,
-body parts, family, activities — each given a word (🐶 "dog", 🍕 "pizza",
-🌳 "tree"…) for things that don't have an obvious "basic speech" corollary
-of their own. These are **search-only**: they don't clutter the curated
-grid, but typing e.g. "dog" while in Emoji-Speak finds them. They're
-deliberately limited to long-established, single-codepoint emoji (roughly
-2016-2018 and earlier) that render reliably on any device — skipping
-skin-tone variants, gender/profession combinations, family groups, and
-flags, which are multi-codepoint sequences that don't render consistently
-everywhere.
+## Testing
 
-## Mood modifiers
+A Playwright suite in `tests/` covers the app's core behavior (speech,
+mood modifiers, suggestions/moods, per-category search, boards,
+backup, theming) — dev-only tooling, not needed to run the app:
 
-Off by default, behind the ⚙️ settings pop-out. When on, whichever moods
-are currently toggled on subtly shift the speaking rate and/or pitch —
-active moods **stack** (multiply together):
-
-| Mood | Effect |
-|---|---|
-| Hungry / Thirsty | ×0.95 speed |
-| Full / Hydrated | ×1.05 speed |
-| Sad | ×0.95 speed, ×0.95 pitch |
-| Happy | ×1.05 speed, ×1.05 pitch |
-| Mad | ×0.9 pitch |
-| Joyful | ×1.1 pitch |
-| Nervous | ×0.9 speed, ×1.1 pitch |
-| Excited | ×1.1 speed, ×1.1 pitch |
-| Hurt | ×0.9 pitch |
-| Great | ×1.1 speed, ×1.1 pitch |
-
-These multiply onto whatever Speed/Pitch are set to in Voice Settings,
-and are clamped to a sane range so several stacked moods can't push the
-voice into unusable territory.
-
-## Boards
-
-Every board — the suggestion strip and each category's grid — can be
-customized with a **press-and-hold** (mouse or touch, ~550ms):
-
-- **Suggestion strip chip** → 📌 Pin (always show it) or Unpin.
-- **Sentence bar**, with something typed in it → adds it to the matching
-  board: a number/formula → Numbers, a single word → Words, anything
-  with more than one word → Sentences.
-- **A search result in Emoji-Speak that isn't on the board yet** (one of
-  its hidden words, e.g. "dog") → ➕ Add to Emoji-Speak, which promotes
-  it onto the visible grid.
-- **Any item already on a board** → 📌 Pin to Board (moves it to the
-  front, right after whatever's already pinned there) or Remove Pin, and
-  🗑️ Remove.
-
-All of this is saved per device, carried by Export/Import, and can be
-undone in one step: **⚙️ Settings → Reset All Boards** puts every board
-and the suggestion strip's pins back to how the app started, without
-touching voice settings, moods, or usage history.
+```sh
+npm install
+npx playwright install chromium   # skip if Playwright already has one
+npm test
+```
 
 ## Data & privacy
 
-Everything (settings, mood state, usage stats for suggestions) stays in
-the browser's `localStorage` on that one device. Nothing is sent
-anywhere, there's no backend, and there's no account system.
-
-## Backup
-
-Since everything lives only in one browser's `localStorage`, clearing
-site data (or switching devices) loses it. Open the ⚙️ settings pop-out
-and use:
-
-- **📤 Export settings** — downloads a `.json` file with your voice
-  settings, mood states, usage stats (the data behind the suggestions
-  strip and the browse pop-over's "Most used" row), and any board
-  customizations (pins, removals, added words/sentences/numbers).
-- **📥 Import settings** — loads a previously exported file back in.
-  This **overwrites** whatever is currently saved on the device, after
-  a confirmation prompt.
+Settings, mood state, usage stats, and board customizations all live in
+`localStorage` on that one device — nothing is synced or sent anywhere.
+Export/Import (Settings) moves them between devices manually.
 
 ## License
 
 GPL-3.0-or-later — see [`LICENSE`](LICENSE). This is meant to be a
-charitable, freely reusable codebase: fork it, adapt the vocabulary,
-build on it.
+charitable, freely reusable codebase: fork it, re-skin it, adapt the
+vocabulary, build on it.

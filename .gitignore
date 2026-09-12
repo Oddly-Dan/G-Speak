@@ -1,0 +1,6 @@
+# Dev-only test tooling (see README's Testing section) — the app itself
+# needs none of this to run.
+node_modules/
+test-results/
+playwright-report/
+blob-report/

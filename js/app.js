@@ -39,7 +39,10 @@
     { id: "pain", neg: "🤕", pos: "💪", negLabel: "Hurt", posLabel: "Great" },
   ];
 
-  // Fast-nav categories. Each has placeholder items to be built out later.
+  // Fast-nav categories and their default vocabulary — a starting set,
+  // since every board is user-customizable at runtime (see boardItems()
+  // and the press-and-hold handlers further down; "Reset All Boards" in
+  // Settings restores exactly what's defined here).
   // mode "append" adds the item to whatever is already typed; "replace" sets
   // the whole sentence bar (used for complete sentences).
   const NAV_BLOCKS = [
@@ -278,12 +281,23 @@
   /* ---------------- Settings (voice, rate, pitch, volume) ---------------- */
 
   const settings = Object.assign(
-    { rate: 1, pitch: 1, volume: 1, voiceURI: "", applyMoodModifiers: false },
+    { rate: 1, pitch: 1, volume: 1, voiceURI: "", applyMoodModifiers: false, theme: "system" },
     loadJSON(LS_SETTINGS, {})
   );
 
   function saveSettings() {
     saveJSON(LS_SETTINGS, settings);
+  }
+
+  // "system" removes the attribute entirely so the CSS
+  // @media(prefers-color-scheme) rule decides; "light"/"dark" force it via
+  // the :root[data-theme=...] rule, which wins either way. See style.css.
+  function applyTheme() {
+    if (settings.theme === "light" || settings.theme === "dark") {
+      document.documentElement.setAttribute("data-theme", settings.theme);
+    } else {
+      document.documentElement.removeAttribute("data-theme");
+    }
   }
 
   /* ---------------- Usage tracking (for suggestions) ---------------- */
@@ -452,6 +466,7 @@
 
   const settingsBtn = document.getElementById("settings-btn");
   const settingsBackdrop = document.getElementById("settings-backdrop");
+  const themeSelect = document.getElementById("theme-select");
   const voiceSelect = document.getElementById("voice-select");
   const rateRange = document.getElementById("rate-range");
   const pitchRange = document.getElementById("pitch-range");
@@ -1000,6 +1015,7 @@
   /* ---------------- Settings popover wiring ---------------- */
 
   function applySettingsToControls() {
+    themeSelect.value = settings.theme;
     rateRange.value = settings.rate;
     pitchRange.value = settings.pitch;
     volumeRange.value = settings.volume;
@@ -1040,6 +1056,12 @@
   moodModifiersToggle.addEventListener("change", () => {
     settings.applyMoodModifiers = moodModifiersToggle.checked;
     saveSettings();
+  });
+
+  themeSelect.addEventListener("change", () => {
+    settings.theme = themeSelect.value;
+    saveSettings();
+    applyTheme();
   });
 
   testVoiceBtn.addEventListener("click", () => speak("Hi! This is how I sound."));
@@ -1194,8 +1216,38 @@
   // who doesn't know tapping the bar itself works.
   keyboardBtn.addEventListener("click", () => sentenceBar.focus());
 
+  /* ---------------- Theme config (branding) ----------------
+     js/theme.config.js already applied the title and palette (before
+     first paint, so there's no flash). All that's left once the DOM
+     exists is the header's logo and visible text. */
+
+  function applyThemeConfig() {
+    const config = window.GSPEAK_THEME_CONFIG || {};
+    const headerText = config.headerTitle || config.title;
+    const h1 = document.querySelector(".brand h1");
+    if (headerText && h1) h1.textContent = headerText;
+
+    const logo = config.logo;
+    const logoEl = document.querySelector(".brand-emoji");
+    if (logo && logo.value && logoEl) {
+      if (logo.type === "svg") {
+        logoEl.innerHTML = logo.value; // trusted: your own config file, not user input
+      } else if (logo.type === "image") {
+        logoEl.innerHTML = "";
+        const img = document.createElement("img");
+        img.src = logo.value;
+        img.alt = "";
+        logoEl.appendChild(img);
+      } else {
+        logoEl.textContent = logo.value;
+      }
+    }
+  }
+
   /* ---------------- Init ---------------- */
 
+  applyTheme();
+  applyThemeConfig();
   renderSuggestions();
   renderMoods();
   renderFastNav();

@@ -7,7 +7,24 @@
 <title>G-Speak</title>
 <meta name="description" content="A simple, minimal text-to-speech communication app." />
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>%F0%9F%97%A3%EF%B8%8F</text></svg>">
+<script>
+  // Sets data-theme before first paint so an explicit Light/Dark choice
+  // doesn't flash the wrong theme for a moment — app.js re-applies (and
+  // owns) this later, this is purely a pre-paint head start. "System"
+  // (the default) needs no help here: the CSS media query already
+  // handles it with no attribute at all.
+  (function () {
+    try {
+      var raw = localStorage.getItem("gspeak.settings");
+      var theme = raw && JSON.parse(raw).theme;
+      if (theme === "light" || theme === "dark") {
+        document.documentElement.setAttribute("data-theme", theme);
+      }
+    } catch (e) {}
+  })();
+</script>
 <link rel="stylesheet" href="css/style.css" />
+<script src="js/theme.config.js"></script>
 </head>
 <body>
 <div id="app">
@@ -53,12 +70,21 @@
 
   <!-- ===================== SETTINGS POPOUT ===================== -->
   <div class="backdrop" id="settings-backdrop" hidden>
-    <div class="popout settings-popout" id="settings-popout" role="dialog" aria-label="Voice settings">
+    <div class="popout settings-popout" id="settings-popout" role="dialog" aria-label="Settings">
       <div class="popout-header">
-        <h2>⚙️ Voice Settings</h2>
+        <h2>⚙️ Settings</h2>
         <button class="icon-btn" type="button" data-close="settings" aria-label="Close settings">✕</button>
       </div>
       <div class="popout-body">
+        <label class="field">
+          <span>Appearance</span>
+          <select id="theme-select">
+            <option value="system">System</option>
+            <option value="light">Light</option>
+            <option value="dark">Dark</option>
+          </select>
+        </label>
+
         <label class="field">
           <span>Voice</span>
           <select id="voice-select"></select>

@@ -1,19 +1,135 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 
+/* ============================================================
+   Theming
+   ------------------------------------------------------------
+   Every color in this file is a custom property, defined once here
+   for light mode (the default look) and again for dark mode. That's
+   what makes three things possible without touching any rule below:
+
+   1. The Appearance select in Voice Settings (Light/Dark/System) sets
+      `data-theme="light"` or `"dark"` on <html>, or removes it
+      entirely for System (falls through to prefers-color-scheme).
+   2. A deployer can re-skin the app via js/theme.config.js — logo,
+      title, and a palette object — with no UI and no build step. It's
+      applied by injecting a small <style> block that redefines
+      whichever of these custom properties it wants to override,
+      in the same cascade order as the block below, so it composes
+      correctly with the light/dark switch instead of fighting it.
+   3. Any future color need is just another custom property here,
+      never a hardcoded literal in a rule further down.
+   ============================================================ */
+
 :root {
   --bg: #f4f6fb;
   --panel: #ffffff;
+  --input-bg: #fbfcff;
+  --active-bg: #eef1ff;
   --ink: #1f2430;
   --ink-soft: #5b6172;
   --border: #e1e5ef;
+
   --green: #2ecc71;
   --green-dark: #26ae60;
   --accent: #4c6ef5;
+
   --pin: #ffb703;
+  --pin-bg: #fff8e6;
+
+  --neg: #d90429;
+  --neg-bg: #fff0f3;
+  --neg-border: #ff8fa3;
+  --pos: #1a8a3c;
+  --pos-bg: #edfbf0;
+  --pos-border: #74d68f;
+
+  --danger: #c1121f;
+  --danger-bg: #fff0f0;
+  --danger-border: #f5b5b5;
+
+  --backdrop-tint: rgba(20, 24, 34, 0.35);
+  --shadow: 0 6px 18px rgba(31, 36, 48, 0.08);
+  --shadow-strong: 0 10px 30px rgba(0, 0, 0, 0.25);
+
   --radius: 16px;
   --radius-sm: 10px;
-  --shadow: 0 6px 18px rgba(31, 36, 48, 0.08);
+
+  color-scheme: light; /* hints native controls (select, range, scrollbar) */
   font-size: 15px;
+}
+
+/* System preference — only takes effect when the toggle is on "System"
+   (i.e. no explicit data-theme is set). */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #14161f;
+    --panel: #1d2029;
+    --input-bg: #262a36;
+    --active-bg: #2a2f42;
+    --ink: #eef1f8;
+    --ink-soft: #a4abbd;
+    --border: #333a4d;
+
+    --green: #34d17e;
+    --green-dark: #1f9c5c;
+    --accent: #7c95ff;
+
+    --pin: #ffcf4d;
+    --pin-bg: #3a3220;
+
+    --neg: #ff6b81;
+    --neg-bg: #3a1e25;
+    --neg-border: #a94456;
+    --pos: #4ade80;
+    --pos-bg: #1a3324;
+    --pos-border: #2f6b46;
+
+    --danger: #ff6b6b;
+    --danger-bg: #3a1f1f;
+    --danger-border: #7a3a3a;
+
+    --backdrop-tint: rgba(0, 0, 0, 0.55);
+    --shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
+    --shadow-strong: 0 10px 30px rgba(0, 0, 0, 0.6);
+
+    color-scheme: dark;
+  }
+}
+
+/* Explicit "Dark" choice — wins regardless of system preference. Same
+   token values as the media-query block above, kept in sync by hand. */
+:root[data-theme="dark"] {
+  --bg: #14161f;
+  --panel: #1d2029;
+  --input-bg: #262a36;
+  --active-bg: #2a2f42;
+  --ink: #eef1f8;
+  --ink-soft: #a4abbd;
+  --border: #333a4d;
+
+  --green: #34d17e;
+  --green-dark: #1f9c5c;
+  --accent: #7c95ff;
+
+  --pin: #ffcf4d;
+  --pin-bg: #3a3220;
+
+  --neg: #ff6b81;
+  --neg-bg: #3a1e25;
+  --neg-border: #a94456;
+  --pos: #4ade80;
+  --pos-bg: #1a3324;
+  --pos-border: #2f6b46;
+
+  --danger: #ff6b6b;
+  --danger-bg: #3a1f1f;
+  --danger-border: #7a3a3a;
+
+  --backdrop-tint: rgba(0, 0, 0, 0.55);
+  --shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
+  --shadow-strong: 0 10px 30px rgba(0, 0, 0, 0.6);
+
+  color-scheme: dark;
 }
 
 * { box-sizing: border-box; }
@@ -63,6 +179,8 @@ main {
 }
 
 .brand-emoji { font-size: 1.05rem; }
+.brand-emoji svg { height: 1.05em; width: auto; vertical-align: middle; }
+.brand-emoji img { height: 1.05em; width: auto; vertical-align: middle; }
 
 .brand h1 {
   font-size: 0.95rem;
@@ -128,7 +246,7 @@ main {
   border: 2px solid var(--border);
   border-radius: var(--radius-sm);
   color: var(--ink);
-  background: #fbfcff;
+  background: var(--input-bg);
   /* Best-effort: reduces (but on some mobile browsers can't fully
      suppress) the OS's own selection/callout UI competing with our
      press-and-hold "Add to Words/Sentences/Numbers" menu. */
@@ -195,7 +313,7 @@ main {
 }
 
 .chip.pinned {
-  background: #fff8e6;
+  background: var(--pin-bg);
   border: 2px solid var(--pin);
 }
 
@@ -229,15 +347,15 @@ main {
 }
 
 .mood-toggle[data-state="1"] {
-  border-color: #ff8fa3;
-  background: #fff0f3;
-  color: #d90429;
+  border-color: var(--neg-border);
+  background: var(--neg-bg);
+  color: var(--neg);
 }
 
 .mood-toggle[data-state="2"] {
-  border-color: #74d68f;
-  background: #edfbf0;
-  color: #1a8a3c;
+  border-color: var(--pos-border);
+  background: var(--pos-bg);
+  color: var(--pos);
 }
 
 .mood-toggle:active { transform: scale(0.96); }
@@ -277,7 +395,7 @@ main {
   right: 0;
   bottom: 0;
   left: 0;
-  background: rgba(20, 24, 34, 0.35);
+  background: var(--backdrop-tint);
   display: flex;
   align-items: flex-end;
   justify-content: center;
@@ -298,7 +416,7 @@ main {
   overflow-y: auto;
   overflow-x: hidden;
   border-radius: 20px 20px 0 0;
-  box-shadow: 0 -10px 30px rgba(0,0,0,0.2);
+  box-shadow: var(--shadow-strong);
   padding: 12px 14px 18px;
 }
 
@@ -331,6 +449,8 @@ main {
   border-radius: var(--radius-sm);
   border: 2px solid var(--border);
   font-size: 0.9rem;
+  background: var(--input-bg);
+  color: var(--ink);
 }
 
 .btn {
@@ -347,9 +467,9 @@ main {
 }
 
 .btn-danger {
-  background: #fff0f0;
-  color: #c1121f;
-  border: 2px solid #f5b5b5;
+  background: var(--danger-bg);
+  color: var(--danger);
+  border: 2px solid var(--danger-border);
   width: 100%;
 }
 
@@ -438,7 +558,7 @@ main {
   border: 2px solid var(--border);
   border-radius: var(--radius-sm);
   margin-bottom: 12px;
-  background: #fbfcff;
+  background: var(--input-bg);
   color: var(--ink);
 }
 
@@ -510,7 +630,7 @@ main {
 
 .item-chip {
   border: 2px solid var(--border);
-  background: #fbfcff;
+  background: var(--input-bg);
   border-radius: var(--radius-sm);
   padding: 9px 8px;
   font-size: 0.85rem;
@@ -520,16 +640,17 @@ main {
   flex-direction: column;
   align-items: center;
   gap: 3px;
+  color: var(--ink);
   -webkit-touch-callout: none;
   -webkit-user-select: none;
   user-select: none;
 }
 
-.item-chip.is-pinned { border-color: var(--pin); background: #fff8e6; }
+.item-chip.is-pinned { border-color: var(--pin); background: var(--pin-bg); }
 
 .item-chip .item-emoji { font-size: 1.3rem; }
 
-.item-chip:active { transform: scale(0.95); background: #eef1ff; }
+.item-chip:active { transform: scale(0.95); background: var(--active-bg); }
 
 /* ---------- Responsive ---------- */
 @media (min-width: 560px) {
@@ -552,7 +673,7 @@ main {
   width: calc(100% - 40px);
   max-width: 320px;
   border-radius: var(--radius);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+  box-shadow: var(--shadow-strong);
   padding: 8px;
   display: flex;
   flex-direction: column;
@@ -561,7 +682,7 @@ main {
 
 .context-menu button {
   border: none;
-  background: #f4f6fb;
+  background: var(--bg);
   border-radius: var(--radius-sm);
   padding: 12px 14px;
   font-size: 0.95rem;
@@ -571,16 +692,19 @@ main {
 }
 
 .context-menu button:active { transform: scale(0.98); }
-.context-menu button.danger { background: #fff0f0; color: #c1121f; }
+.context-menu button.danger { background: var(--danger-bg); color: var(--danger); }
 .context-menu button.cancel { background: none; color: var(--ink-soft); text-align: center; }
 
-/* ---------- Toast ---------- */
+/* ---------- Toast ----------
+   Intentionally theme-invariant (always a dark pill with white text,
+   regardless of light/dark mode) rather than themed via custom
+   properties — a transient overlay, not part of the page surface. */
 .toast {
   position: fixed;
   left: 50%;
   bottom: 24px;
   transform: translate(-50%, 0);
-  background: var(--ink);
+  background: #1f2430;
   color: white;
   font-size: 0.85rem;
   font-weight: 700;

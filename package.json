@@ -1,0 +1,11 @@
+{
+  "name": "g-speak",
+  "private": true,
+  "description": "Dev-only tooling for G-Speak. The app itself needs none of this — see README.md.",
+  "scripts": {
+    "test": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.56.1"
+  }
+}
