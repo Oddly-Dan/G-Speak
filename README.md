@@ -41,7 +41,8 @@ Available voices depend on the device and OS.
   Sentences only ever matches Sentences, never Words or Numbers; switch
   tabs (or use ⌨️/the sentence bar directly) to search a different one.
   The goal is to reach almost anything in a couple of taps. Current
-  items are a starting set meant to be built out further.
+  items are a starting set meant to be built out further — and are
+  customizable, see [Boards](#boards) below.
 
 ### Emoji-Speak
 
@@ -94,6 +95,27 @@ These multiply onto whatever Speed/Pitch are set to in Voice Settings,
 and are clamped to a sane range so several stacked moods can't push the
 voice into unusable territory.
 
+## Boards
+
+Every board — the suggestion strip and each category's grid — can be
+customized with a **press-and-hold** (mouse or touch, ~550ms):
+
+- **Suggestion strip chip** → 📌 Pin (always show it) or Unpin.
+- **Sentence bar**, with something typed in it → adds it to the matching
+  board: a number/formula → Numbers, a single word → Words, anything
+  with more than one word → Sentences.
+- **A search result in Emoji-Speak that isn't on the board yet** (one of
+  its hidden words, e.g. "dog") → ➕ Add to Emoji-Speak, which promotes
+  it onto the visible grid.
+- **Any item already on a board** → 📌 Pin to Board (moves it to the
+  front, right after whatever's already pinned there) or Remove Pin, and
+  🗑️ Remove.
+
+All of this is saved per device, carried by Export/Import, and can be
+undone in one step: **⚙️ Settings → Reset All Boards** puts every board
+and the suggestion strip's pins back to how the app started, without
+touching voice settings, moods, or usage history.
+
 ## Data & privacy
 
 Everything (settings, mood state, usage stats for suggestions) stays in
@@ -107,8 +129,9 @@ site data (or switching devices) loses it. Open the ⚙️ settings pop-out
 and use:
 
 - **📤 Export settings** — downloads a `.json` file with your voice
-  settings, mood states, and usage stats (the data behind the
-  suggestions strip and the browse pop-over's "Most used" row).
+  settings, mood states, usage stats (the data behind the suggestions
+  strip and the browse pop-over's "Most used" row), and any board
+  customizations (pins, removals, added words/sentences/numbers).
 - **📥 Import settings** — loads a previously exported file back in.
   This **overwrites** whatever is currently saved on the device, after
   a confirmation prompt.

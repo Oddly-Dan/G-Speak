@@ -12,10 +12,13 @@
   const LS_SETTINGS = "gspeak.settings";
   const LS_USAGE = "gspeak.usage";
   const LS_MOODS = "gspeak.moods";
+  const LS_BOARDS = "gspeak.boards";
 
   /* ---------------- Config ---------------- */
 
-  // Words that are always shown in the suggestion strip, in this order.
+  // Default pinned words for the home suggestion strip — the starting
+  // point for boardState.home.pinned, which is what's actually shown
+  // (press-and-hold a chip to pin/unpin; "Reset All Boards" restores this).
   const PINNED_WORDS = ["Yes", "No", "Help"];
 
   // Starter suggestions before any usage data exists.
@@ -290,7 +293,8 @@
   function recordUsage(text) {
     const key = text.trim().toLowerCase();
     if (!key) return;
-    if (PINNED_WORDS.some((w) => w.toLowerCase() === key)) return; // already pinned
+    const pinned = getHomeBoardState().pinned;
+    if (pinned.some((w) => w.toLowerCase() === key)) return; // already pinned
     const entry = usage[key] || { count: 0, display: text.trim() };
     entry.count += 1;
     entry.display = text.trim(); // keep most recent casing
@@ -298,8 +302,9 @@
     saveJSON(LS_USAGE, usage);
   }
 
-  function topUsageEntries(limit) {
+  function topUsageEntries(limit, excludeSet) {
     return Object.values(usage)
+      .filter((e) => !excludeSet || !excludeSet.has(e.display.toLowerCase()))
       .sort((a, b) => b.count - a.count)
       .slice(0, limit)
       .map((e) => e.display);
@@ -314,6 +319,124 @@
 
   function saveMoods() {
     saveJSON(LS_MOODS, moodState);
+  }
+
+  /* ---------------- Boards (customizable vocabulary) ----------------
+     Press-and-hold lets you pin/unpin, remove, and add items — this is
+     the persisted state layered on top of each NAV_BLOCK's hardcoded
+     items/hiddenItems. Keyed by block id ("emoji", "words", ...) plus a
+     "home" entry for the suggestion strip's pinned words. Per-block
+     shape: { removed: [key,...], added: [item,...], pinned: [key,...] }.
+     "key" is always the lowercased word/text — the same thing itemLabel()
+     returns — since every item already has a unique one of those. */
+  const boardState = loadJSON(LS_BOARDS, {});
+
+  function saveBoards() {
+    saveJSON(LS_BOARDS, boardState);
+  }
+
+  function getBoardState(blockId) {
+    if (!boardState[blockId]) {
+      boardState[blockId] = { removed: [], added: [], pinned: [] };
+    }
+    const s = boardState[blockId];
+    if (!Array.isArray(s.removed)) s.removed = [];
+    if (!Array.isArray(s.added)) s.added = [];
+    if (!Array.isArray(s.pinned)) s.pinned = [];
+    return s;
+  }
+
+  function getHomeBoardState() {
+    if (!boardState.home || !Array.isArray(boardState.home.pinned)) {
+      boardState.home = { pinned: PINNED_WORDS.slice() };
+    }
+    return boardState.home;
+  }
+
+  // De-dupes a combined item list by label (case-insensitive), keeping
+  // the first occurrence — used wherever default + hidden + added items
+  // might overlap (e.g. a hidden Emoji-Speak item promoted onto the board).
+  function dedupeItems(items) {
+    const seen = new Set();
+    return items.filter((item) => {
+      const key = itemLabel(item).toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }
+
+  // The actual, current contents of a category's board: its default
+  // items minus anything removed, plus anything added, with pinned items
+  // moved to the front (in the order they were pinned).
+  function boardItems(block) {
+    const state = getBoardState(block.id);
+    const removedSet = new Set(state.removed);
+    const base = block.items.filter((item) => !removedSet.has(itemLabel(item).toLowerCase()));
+    const all = dedupeItems(base.concat(state.added));
+    const pinnedSet = new Set(state.pinned);
+    const pinnedItems = state.pinned
+      .map((key) => all.find((item) => itemLabel(item).toLowerCase() === key))
+      .filter(Boolean);
+    const unpinnedItems = all.filter((item) => !pinnedSet.has(itemLabel(item).toLowerCase()));
+    return pinnedItems.concat(unpinnedItems);
+  }
+
+  // Adds a brand-new item (typed text, or a promoted hidden Emoji-Speak
+  // item) to a board, unless it's already actually on that board. Checked
+  // against the current board (not the raw defaults/hidden lists), so a
+  // hidden item can be promoted and a previously-removed default can be
+  // re-added — neither is "already there" once you account for that state.
+  function addItemToBoard(block, item) {
+    const state = getBoardState(block.id);
+    const key = itemLabel(item).toLowerCase();
+    const already = boardItems(block).some((i) => itemLabel(i).toLowerCase() === key);
+    if (already) {
+      showToast(`Already in ${block.label}`);
+      return;
+    }
+    state.added.push(item);
+    // A freshly-removed default with the same key would otherwise mask it.
+    state.removed = state.removed.filter((k) => k !== key);
+    saveBoards();
+    showToast(`Added to ${block.label}!`);
+    if (navState.activeBlockId === block.id) {
+      renderNavFrequentRow();
+      renderNavGrid();
+    }
+  }
+
+  // Removes an item from a board — a default item is hidden via
+  // `removed`, a user-added one is just dropped from `added`.
+  function removeFromBoard(block, item) {
+    const state = getBoardState(block.id);
+    const key = itemLabel(item).toLowerCase();
+    const isDefault = block.items.some((i) => itemLabel(i).toLowerCase() === key);
+    if (isDefault) {
+      if (!state.removed.includes(key)) state.removed.push(key);
+    } else {
+      state.added = state.added.filter((i) => itemLabel(i).toLowerCase() !== key);
+    }
+    state.pinned = state.pinned.filter((k) => k !== key);
+    saveBoards();
+    showToast(`Removed from ${block.label}`);
+    renderNavGrid();
+  }
+
+  // Pinning moves an item to the end of the pinned group — i.e. the
+  // top-most/left-most spot that was, until now, unpinned.
+  function toggleBoardPin(block, key) {
+    const state = getBoardState(block.id);
+    const idx = state.pinned.indexOf(key);
+    if (idx >= 0) {
+      state.pinned.splice(idx, 1);
+      showToast("Pin removed");
+    } else {
+      state.pinned.push(key);
+      showToast("Pinned to board!");
+    }
+    saveBoards();
+    renderNavGrid();
   }
 
   /* ---------------- DOM refs ---------------- */
@@ -341,6 +464,7 @@
   const exportBtn = document.getElementById("export-btn");
   const importBtn = document.getElementById("import-btn");
   const importFileInput = document.getElementById("import-file-input");
+  const resetBoardsBtn = document.getElementById("reset-boards-btn");
 
   const navBackdrop = document.getElementById("nav-backdrop");
   const navSearch = document.getElementById("nav-search");
@@ -414,16 +538,22 @@
   /* ---------------- Suggestions rendering ---------------- */
 
   function renderSuggestions() {
+    const pinnedWords = getHomeBoardState().pinned;
+    const pinnedSet = new Set(pinnedWords.map((w) => w.toLowerCase()));
     const usedCount = Object.keys(usage).length;
     const dynamicSlots = Math.min(
       MAX_DYNAMIC_SUGGESTIONS,
       Math.max(STARTER_DYNAMIC.length, usedCount)
     );
 
-    const top = topUsageEntries(dynamicSlots);
+    const top = topUsageEntries(dynamicSlots, pinnedSet);
     const dynamic = top.slice();
     STARTER_DYNAMIC.forEach((w) => {
-      if (dynamic.length < dynamicSlots && !dynamic.some((d) => d.toLowerCase() === w.toLowerCase())) {
+      if (
+        dynamic.length < dynamicSlots &&
+        !pinnedSet.has(w.toLowerCase()) &&
+        !dynamic.some((d) => d.toLowerCase() === w.toLowerCase())
+      ) {
         dynamic.push(w);
       }
     });
@@ -432,7 +562,7 @@
 
     // Pinned words sit at the start of the row; the dynamic/learned
     // suggestions follow after them.
-    PINNED_WORDS.forEach((text) => {
+    pinnedWords.forEach((text) => {
       suggestionsRow.appendChild(makeChip(text, true));
     });
     dynamic.slice(0, dynamicSlots).forEach((text) => {
@@ -440,12 +570,38 @@
     });
   }
 
+  // Press-and-hold a chip to pin it to the home suggestion strip (or
+  // unpin it, if it's already pinned there) — this is separate from a
+  // category board's own pinning, which only affects that one board.
   function makeChip(text, pinned) {
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className = "chip" + (pinned ? " pinned" : "");
     btn.textContent = (pinned ? "📌 " : "") + text;
-    btn.addEventListener("click", () => appendToSentence(text));
+    makeInteractive(btn, {
+      onClick: () => appendToSentence(text),
+      onLongPress: () => {
+        const homeState = getHomeBoardState();
+        const key = text.toLowerCase();
+        const isPinned = homeState.pinned.some((w) => w.toLowerCase() === key);
+        showContextMenu([
+          {
+            label: isPinned ? "📌 Unpin" : "📌 Pin",
+            onClick: () => {
+              if (isPinned) {
+                homeState.pinned = homeState.pinned.filter((w) => w.toLowerCase() !== key);
+                showToast("Unpinned");
+              } else {
+                homeState.pinned.push(text);
+                showToast("Pinned!");
+              }
+              saveBoards();
+              renderSuggestions();
+            },
+          },
+        ]);
+      },
+    });
     return btn;
   }
 
@@ -457,6 +613,116 @@
   function appendToSentence(text) {
     const current = sentenceBar.value.trim();
     sentenceBar.value = current ? current + " " + text : text;
+  }
+
+  /* ---------------- Press-and-hold ---------------- */
+
+  const LONG_PRESS_MS = 550;
+  const LONG_PRESS_MOVE_TOLERANCE = 10;
+
+  // Wires up an element so a normal tap runs onClick and a sustained
+  // press (mouse or touch, ~550ms, without much movement) runs
+  // onLongPress instead — never both for the same press.
+  function makeInteractive(el, { onClick, onLongPress }) {
+    let timer = null;
+    let longPressed = false;
+    let startX = 0;
+    let startY = 0;
+
+    el.addEventListener("pointerdown", (e) => {
+      if (e.pointerType === "mouse" && e.button !== 0) return; // left-click only
+      longPressed = false;
+      startX = e.clientX;
+      startY = e.clientY;
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        longPressed = true;
+        onLongPress();
+      }, LONG_PRESS_MS);
+    });
+    el.addEventListener("pointermove", (e) => {
+      if (Math.hypot(e.clientX - startX, e.clientY - startY) > LONG_PRESS_MOVE_TOLERANCE) {
+        clearTimeout(timer);
+      }
+    });
+    ["pointerup", "pointerleave", "pointercancel"].forEach((ev) =>
+      el.addEventListener(ev, () => clearTimeout(timer))
+    );
+    el.addEventListener("contextmenu", (e) => e.preventDefault());
+    el.addEventListener("click", () => {
+      if (longPressed) {
+        longPressed = false; // long-press already handled it; swallow this click
+        return;
+      }
+      if (onClick) onClick();
+    });
+  }
+
+  // Same long-press detection, but for an element (like the sentence bar)
+  // whose normal click/tap behavior should be left completely alone.
+  function makeLongPressOnly(el, onLongPress) {
+    makeInteractive(el, { onClick: null, onLongPress });
+  }
+
+  const contextBackdrop = document.getElementById("context-backdrop");
+  const contextMenu = document.getElementById("context-menu");
+
+  // actions: [{ label, onClick, danger? }]. Always adds a Cancel entry.
+  function showContextMenu(actions) {
+    contextMenu.innerHTML = "";
+    actions.forEach((action) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      if (action.danger) btn.className = "danger";
+      btn.textContent = action.label;
+      btn.addEventListener("click", () => {
+        closeContextMenu();
+        action.onClick();
+      });
+      contextMenu.appendChild(btn);
+    });
+    const cancelBtn = document.createElement("button");
+    cancelBtn.type = "button";
+    cancelBtn.className = "cancel";
+    cancelBtn.textContent = "Cancel";
+    cancelBtn.addEventListener("click", closeContextMenu);
+    contextMenu.appendChild(cancelBtn);
+    contextBackdrop.hidden = false;
+  }
+
+  function closeContextMenu() {
+    contextBackdrop.hidden = true;
+  }
+
+  contextBackdrop.addEventListener("click", (e) => {
+    if (e.target === contextBackdrop) closeContextMenu();
+  });
+
+  const toastEl = document.getElementById("toast");
+  let toastTimer = null;
+
+  function showToast(message) {
+    toastEl.textContent = message;
+    toastEl.hidden = false;
+    // Reflow so the transition re-triggers on rapid repeated calls.
+    void toastEl.offsetWidth;
+    toastEl.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => {
+      toastEl.classList.remove("show");
+      setTimeout(() => {
+        toastEl.hidden = true;
+      }, 200);
+    }, 1600);
+  }
+
+  // What kind of board a typed sentence-bar value belongs on.
+  function classifySentenceContent(text) {
+    const trimmed = text.trim();
+    if (!trimmed) return null;
+    if (/^[0-9+\-*/=.,()\s]+$/.test(trimmed)) return "numbers"; // number or formula
+    if (/\s/.test(trimmed)) return "sentences"; // more than one word
+    return "words"; // a single typed word
   }
 
   /* ---------------- Moods rendering ---------------- */
@@ -509,22 +775,46 @@
     return typeof item === "object" ? item.word : item;
   }
 
-  function makeItemChip(item, block) {
+  // isOnBoard: false means this chip is a hidden-vocabulary search hit
+  // that isn't actually on the board yet (see Emoji-Speak's hiddenItems) —
+  // its press-and-hold menu offers "Add to <board>" instead of the normal
+  // Remove/Pin options for an item that's already there.
+  function makeItemChip(item, block, isOnBoard) {
     const isObj = typeof item === "object";
     const label = itemLabel(item);
+    const key = label.toLowerCase();
+    const state = getBoardState(block.id);
+    const pinned = isOnBoard && state.pinned.includes(key);
     const btn = document.createElement("button");
     btn.type = "button";
-    btn.className = "item-chip";
+    btn.className = "item-chip" + (pinned ? " is-pinned" : "");
     btn.innerHTML = isObj
       ? `<span class="item-emoji">${item.emoji}</span><span>${item.word}</span>`
       : `<span>${item}</span>`;
-    btn.addEventListener("click", () => {
-      if (block.mode === "replace") {
-        sentenceBar.value = label;
-        closePopover(navBackdrop);
-      } else {
-        appendToSentence(label);
-      }
+    makeInteractive(btn, {
+      onClick: () => {
+        if (block.mode === "replace") {
+          sentenceBar.value = label;
+          closePopover(navBackdrop);
+        } else {
+          appendToSentence(label);
+        }
+      },
+      onLongPress: () => {
+        if (!isOnBoard) {
+          showContextMenu([
+            { label: `➕ Add to ${block.label}`, onClick: () => addItemToBoard(block, item) },
+          ]);
+          return;
+        }
+        showContextMenu([
+          {
+            label: pinned ? "📌 Remove Pin" : "📌 Pin to Board",
+            onClick: () => toggleBoardPin(block, key),
+          },
+          { label: "🗑️ Remove", danger: true, onClick: () => removeFromBoard(block, item) },
+        ]);
+      },
     });
     return btn;
   }
@@ -574,15 +864,15 @@
   }
 
   // "Most used" here is scoped to the active category: only usage entries
-  // whose text matches one of that category's own items (including its
-  // hidden, search-only ones) count, so this row is specific to what
-  // you're currently browsing rather than a repeat of the home screen's
-  // global suggestions.
+  // whose text matches one of that category's own items (its current
+  // board contents, plus its hidden, search-only ones) count, so this row
+  // is specific to what you're currently browsing rather than a repeat of
+  // the home screen's global suggestions.
   function renderNavFrequentRow() {
     navFrequentRow.innerHTML = "";
     const block = activeBlock();
     const categoryLabels = new Set(
-      block.items.concat(block.hiddenItems || []).map((item) => itemLabel(item).toLowerCase())
+      boardItems(block).concat(block.hiddenItems || []).map((item) => itemLabel(item).toLowerCase())
     );
     const top = Object.values(usage)
       .filter((entry) => categoryLabels.has(entry.display.toLowerCase()))
@@ -600,20 +890,25 @@
     top.forEach((text) => navFrequentRow.appendChild(makeChip(text, false)));
   }
 
-  // Shows the active category's visible items, or — while searching —
-  // whichever of that SAME category's items (visible plus its hidden,
-  // search-only ones) match the query. Never reaches into other categories.
+  // Shows the active category's board, or — while searching — whichever
+  // of that SAME category's items (board plus its hidden, search-only
+  // ones) match the query. Never reaches into other categories.
   function renderNavGrid() {
     navPopoutGrid.innerHTML = "";
     const block = activeBlock();
+    const board = boardItems(block);
     let items;
     if (navState.query) {
-      const pool = block.items.concat(block.hiddenItems || []);
+      const pool = dedupeItems(board.concat(block.hiddenItems || []));
       items = pool.filter((item) => itemLabel(item).toLowerCase().includes(navState.query));
     } else {
-      items = block.items;
+      items = board;
     }
-    items.forEach((item) => navPopoutGrid.appendChild(makeItemChip(item, block)));
+    const boardKeys = new Set(board.map((item) => itemLabel(item).toLowerCase()));
+    items.forEach((item) => {
+      const isOnBoard = boardKeys.has(itemLabel(item).toLowerCase());
+      navPopoutGrid.appendChild(makeItemChip(item, block, isOnBoard));
+    });
     applyAdaptiveColumns(navPopoutGrid, items);
   }
 
@@ -749,6 +1044,22 @@
 
   testVoiceBtn.addEventListener("click", () => speak("Hi! This is how I sound."));
 
+  resetBoardsBtn.addEventListener("click", () => {
+    const ok = confirm(
+      "Reset every category board and the suggestion strip's pinned words back to their defaults? Anything you've added, removed, or pinned will be lost. Voice settings, moods, and usage history are not affected."
+    );
+    if (!ok) return;
+    Object.keys(boardState).forEach((k) => delete boardState[k]);
+    saveBoards();
+    renderSuggestions();
+    if (!navBackdrop.hidden) {
+      renderNavCategoryTabs();
+      renderNavFrequentRow();
+      renderNavGrid();
+    }
+    showToast("Boards reset to defaults");
+  });
+
   /* ---------------- Import / export (backup) ---------------- */
 
   exportBtn.addEventListener("click", () => {
@@ -759,6 +1070,7 @@
       settings,
       usage,
       moods: moodState,
+      boards: boardState,
     };
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
@@ -785,14 +1097,15 @@
       } catch (e) {
         data = null;
       }
-      const looksValid = data && typeof data === "object" && (data.settings || data.usage || data.moods);
+      const looksValid =
+        data && typeof data === "object" && (data.settings || data.usage || data.moods || data.boards);
       if (!looksValid) {
         alert("That file doesn't look like a valid G-Speak backup.");
         importFileInput.value = "";
         return;
       }
       const ok = confirm(
-        "This will replace the voice settings, moods, and most-used words currently saved on this device. Continue?"
+        "This will replace the voice settings, moods, most-used words, and any board customizations currently saved on this device. Continue?"
       );
       if (!ok) {
         importFileInput.value = "";
@@ -813,15 +1126,25 @@
         Object.keys(usage).forEach((k) => delete usage[k]);
         Object.assign(usage, data.usage);
       }
+      if (data.boards && typeof data.boards === "object") {
+        Object.keys(boardState).forEach((k) => delete boardState[k]);
+        Object.assign(boardState, data.boards);
+      }
 
       saveSettings();
       saveMoods();
       saveJSON(LS_USAGE, usage);
+      saveBoards();
 
       applySettingsToControls();
       refreshVoices();
       renderSuggestions();
       renderMoods();
+      if (!navBackdrop.hidden) {
+        renderNavCategoryTabs();
+        renderNavFrequentRow();
+        renderNavGrid();
+      }
       importFileInput.value = "";
       alert("Import complete!");
     };
@@ -850,6 +1173,20 @@
 
   clearBtn.addEventListener("click", () => {
     sentenceBar.value = "";
+  });
+
+  // Press-and-hold whatever's typed to add it to the matching board:
+  // a number or formula -> Numbers, a single word -> Words, anything
+  // with more than one word -> Sentences.
+  makeLongPressOnly(sentenceBar, () => {
+    const text = sentenceBar.value;
+    const kind = classifySentenceContent(text);
+    if (!kind) return;
+    sentenceBar.blur(); // avoid the keyboard popping up behind the menu
+    const block = NAV_BLOCKS.find((b) => b.id === kind);
+    showContextMenu([
+      { label: `➕ Add to ${block.label}`, onClick: () => addItemToBoard(block, text.trim()) },
+    ]);
   });
 
   // The one deliberate, explicit way to summon the on-screen keyboard

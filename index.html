@@ -103,9 +103,28 @@
           <button id="import-btn" class="btn btn-secondary" type="button">📥 Import settings</button>
         </div>
         <input type="file" id="import-file-input" accept="application/json" hidden />
+
+        <div class="settings-divider" role="separator"></div>
+
+        <h3 class="popout-subtitle">Boards</h3>
+        <p class="popout-hint">
+          Press and hold a chip or a board button to pin, unpin, remove, or
+          add words. If it gets messy, this puts every category board (and
+          the suggestion strip's pinned words) back to how it started.
+          Your voice settings, moods, and usage history aren't touched.
+        </p>
+        <button id="reset-boards-btn" class="btn btn-danger" type="button">🔄 Reset All Boards</button>
       </div>
     </div>
   </div>
+
+  <!-- ===================== PRESS-AND-HOLD CONTEXT MENU ===================== -->
+  <div class="backdrop context-backdrop" id="context-backdrop" hidden>
+    <div class="context-menu" id="context-menu" role="menu"></div>
+  </div>
+
+  <!-- ===================== TOAST ===================== -->
+  <div class="toast" id="toast" hidden></div>
 
   <!-- ===================== NAV / BROWSE POPOVER ===================== -->
   <div class="backdrop" id="nav-backdrop" hidden>

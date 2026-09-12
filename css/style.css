@@ -129,6 +129,10 @@ main {
   border-radius: var(--radius-sm);
   color: var(--ink);
   background: #fbfcff;
+  /* Best-effort: reduces (but on some mobile browsers can't fully
+     suppress) the OS's own selection/callout UI competing with our
+     press-and-hold "Add to Words/Sentences/Numbers" menu. */
+  -webkit-touch-callout: none;
 }
 
 .sentence-bar:focus {
@@ -183,6 +187,11 @@ main {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  /* Press-and-hold (pin/unpin) shouldn't trigger the OS's own text-select
+     callout on top of our own menu. */
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .chip.pinned {
@@ -335,6 +344,13 @@ main {
 .btn-secondary {
   background: var(--accent);
   color: white;
+}
+
+.btn-danger {
+  background: #fff0f0;
+  color: #c1121f;
+  border: 2px solid #f5b5b5;
+  width: 100%;
 }
 
 .toggle-row {
@@ -504,7 +520,12 @@ main {
   flex-direction: column;
   align-items: center;
   gap: 3px;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
 }
+
+.item-chip.is-pinned { border-color: var(--pin); background: #fff8e6; }
 
 .item-chip .item-emoji { font-size: 1.3rem; }
 
@@ -519,3 +540,64 @@ main {
   .popout { border-radius: 20px; margin-bottom: 40px; }
   .backdrop { align-items: center; }
 }
+
+/* ---------- Press-and-hold context menu ---------- */
+.context-backdrop {
+  align-items: center;
+  z-index: 60; /* above the other popovers, since it can open on top of one */
+}
+
+.context-menu {
+  background: var(--panel);
+  width: calc(100% - 40px);
+  max-width: 320px;
+  border-radius: var(--radius);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.context-menu button {
+  border: none;
+  background: #f4f6fb;
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  text-align: left;
+  color: var(--ink);
+}
+
+.context-menu button:active { transform: scale(0.98); }
+.context-menu button.danger { background: #fff0f0; color: #c1121f; }
+.context-menu button.cancel { background: none; color: var(--ink-soft); text-align: center; }
+
+/* ---------- Toast ---------- */
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  transform: translate(-50%, 0);
+  background: var(--ink);
+  color: white;
+  font-size: 0.85rem;
+  font-weight: 700;
+  padding: 10px 18px;
+  border-radius: 999px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+  z-index: 70;
+  opacity: 0;
+  transition: opacity 0.2s, transform 0.2s;
+  pointer-events: none;
+  max-width: calc(100% - 40px);
+  text-align: center;
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translate(-50%, -6px);
+}
+
+.toast[hidden] { display: none; }
