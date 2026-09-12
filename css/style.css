@@ -10,10 +10,10 @@
   --green-dark: #26ae60;
   --accent: #4c6ef5;
   --pin: #ffb703;
-  --radius: 18px;
-  --radius-sm: 12px;
+  --radius: 16px;
+  --radius-sm: 10px;
   --shadow: 0 6px 18px rgba(31, 36, 48, 0.08);
-  font-size: 18px;
+  font-size: 15px;
 }
 
 * { box-sizing: border-box; }
@@ -37,13 +37,13 @@ button {
   max-width: 900px;
   margin: 0 auto;
   min-height: 100%;
-  padding: 12px 14px 32px;
+  padding: 8px 10px 20px;
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 10px;
 }
 
-/* ---------- Header ---------- */
+/* ---------- Header (kept deliberately small — the cog is rarely used) ---------- */
 .topbar {
   display: flex;
   align-items: center;
@@ -53,13 +53,13 @@ button {
 .brand {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 6px;
 }
 
-.brand-emoji { font-size: 2rem; }
+.brand-emoji { font-size: 1.05rem; }
 
 .brand h1 {
-  font-size: 1.4rem;
+  font-size: 0.95rem;
   margin: 0;
   letter-spacing: 0.02em;
 }
@@ -69,40 +69,50 @@ button {
   background: var(--panel);
   box-shadow: var(--shadow);
   border-radius: 50%;
-  width: 48px;
-  height: 48px;
-  font-size: 1.4rem;
+  width: 38px;
+  height: 38px;
+  font-size: 1.1rem;
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--ink);
+  flex: none;
+}
+
+.icon-btn--sm {
+  width: 26px;
+  height: 26px;
+  font-size: 0.85rem;
 }
 
 .icon-btn:active { transform: scale(0.94); }
 
-/* ---------- Sentence bar ---------- */
+/* ---------- Sentence bar: always visible while the rest of the page scrolls ---------- */
 .sentence-area {
+  position: sticky;
+  top: 6px;
+  z-index: 10;
   background: var(--panel);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
-  padding: 16px;
+  padding: 10px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
 }
 
 .sentence-row {
   display: flex;
-  gap: 10px;
+  gap: 8px;
   align-items: stretch;
 }
 
 .sentence-bar {
   flex: 1;
   min-width: 0;
-  font-size: 1.9rem;
+  font-size: 1.25rem;
   font-weight: 700;
-  padding: 14px 16px;
+  padding: 8px 10px;
   border: 2px solid var(--border);
   border-radius: var(--radius-sm);
   color: var(--ink);
@@ -120,35 +130,36 @@ button {
   border: none;
   background: var(--green);
   color: white;
-  font-size: 1.6rem;
+  font-size: 1.1rem;
   font-weight: 800;
-  padding: 18px;
+  padding: 10px;
   border-radius: var(--radius-sm);
-  box-shadow: 0 6px 0 var(--green-dark);
+  box-shadow: 0 4px 0 var(--green-dark);
 }
 
 .speak-btn:active {
   transform: translateY(4px);
-  box-shadow: 0 2px 0 var(--green-dark);
+  box-shadow: 0 0 0 var(--green-dark);
 }
 
 /* ---------- Suggestions ---------- */
 .chip-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
 }
 
 .chip {
+  flex: 0 0 auto;
   border: none;
   background: var(--panel);
   box-shadow: var(--shadow);
   border-radius: 999px;
-  padding: 10px 16px;
-  font-size: 1rem;
+  padding: 6px 12px;
+  font-size: 0.8rem;
   font-weight: 600;
   color: var(--ink);
-  max-width: 220px;
+  max-width: 200px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -165,19 +176,19 @@ button {
 .mood-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
 }
 
 .mood-toggle {
   border: 2px solid var(--border);
   background: var(--panel);
   border-radius: 999px;
-  padding: 8px 14px;
-  font-size: 0.95rem;
+  padding: 4px 9px;
+  font-size: 0.75rem;
   font-weight: 700;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   color: var(--ink-soft);
 }
 
@@ -199,24 +210,24 @@ button {
 .fastnav {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
+  gap: 8px;
 }
 
 .nav-block {
   border: none;
   border-radius: var(--radius);
-  padding: 18px 10px;
+  padding: 10px 8px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   color: white;
   font-weight: 800;
-  font-size: 1rem;
+  font-size: 0.8rem;
   box-shadow: var(--shadow);
 }
 
-.nav-block .nav-emoji { font-size: 1.9rem; }
+.nav-block .nav-emoji { font-size: 1.4rem; }
 
 .nav-block:active { transform: scale(0.96); }
 
@@ -240,26 +251,28 @@ button {
   max-width: 640px;
   max-height: 82vh;
   overflow-y: auto;
-  border-radius: 22px 22px 0 0;
+  overflow-x: hidden;
+  border-radius: 20px 20px 0 0;
   box-shadow: 0 -10px 30px rgba(0,0,0,0.2);
-  padding: 16px 18px 24px;
+  padding: 12px 14px 18px;
 }
 
 .popout-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 
-.popout-header h2 { margin: 0; font-size: 1.2rem; }
+.popout-header h2 { margin: 0; font-size: 1rem; }
 
 .field {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  margin-bottom: 16px;
+  gap: 5px;
+  margin-bottom: 12px;
   font-weight: 700;
+  font-size: 0.85rem;
   color: var(--ink-soft);
 }
 
@@ -269,18 +282,18 @@ button {
 }
 
 .field select {
-  padding: 10px;
+  padding: 8px;
   border-radius: var(--radius-sm);
   border: 2px solid var(--border);
-  font-size: 1rem;
+  font-size: 0.9rem;
 }
 
 .btn {
   border: none;
   border-radius: var(--radius-sm);
-  padding: 12px 16px;
+  padding: 10px 14px;
   font-weight: 800;
-  font-size: 1rem;
+  font-size: 0.9rem;
 }
 
 .btn-secondary {
@@ -291,17 +304,17 @@ button {
 .settings-divider {
   height: 1px;
   background: var(--border);
-  margin: 4px 0 16px;
+  margin: 4px 0 14px;
 }
 
 .popout-subtitle {
   margin: 0 0 4px;
-  font-size: 1.05rem;
+  font-size: 0.95rem;
 }
 
 .popout-hint {
-  margin: 0 0 12px;
-  font-size: 0.9rem;
+  margin: 0 0 10px;
+  font-size: 0.8rem;
   color: var(--ink-soft);
   font-weight: 500;
 }
@@ -309,20 +322,20 @@ button {
 .settings-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 8px;
 }
 
-.settings-actions .btn { flex: 1 1 160px; }
+.settings-actions .btn { flex: 1 1 150px; }
 
 /* ---------- Nav / browse popover ---------- */
 .nav-search {
   width: 100%;
-  font-size: 1.1rem;
+  font-size: 0.9rem;
   font-weight: 600;
-  padding: 12px 14px;
+  padding: 8px 10px;
   border: 2px solid var(--border);
   border-radius: var(--radius-sm);
-  margin-bottom: 16px;
+  margin-bottom: 12px;
   background: #fbfcff;
   color: var(--ink);
 }
@@ -332,32 +345,45 @@ button {
   border-color: var(--accent);
 }
 
-.nav-section { margin-bottom: 14px; }
+.nav-section { margin-bottom: 12px; }
 
 .nav-section-title {
-  margin: 0 0 8px;
-  font-size: 0.9rem;
+  margin: 0 0 6px;
+  font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--ink-soft);
 }
 
-.category-tab-row {
+/* Single-line, swipeable rows: content past the popover's edge is simply
+   clipped rather than wrapping to a second line or spilling out. */
+.category-tab-row,
+#nav-frequent-row {
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  overflow-y: hidden;
+  gap: 6px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.category-tab-row::-webkit-scrollbar,
+#nav-frequent-row::-webkit-scrollbar {
+  display: none;
 }
 
 .category-tab {
+  flex: 0 0 auto;
   border: 2px solid transparent;
   border-radius: 999px;
-  padding: 8px 14px;
-  font-size: 0.95rem;
+  padding: 5px 10px;
+  font-size: 0.75rem;
   font-weight: 700;
   color: white;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   opacity: 0.55;
 }
 
@@ -370,32 +396,33 @@ button {
 
 .nav-empty-hint {
   margin: 0;
-  font-size: 0.9rem;
+  font-size: 0.8rem;
   color: var(--ink-soft);
   font-style: italic;
+  white-space: nowrap;
 }
 
 .item-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 10px;
+  gap: 8px;
 }
 
 .item-chip {
   border: 2px solid var(--border);
   background: #fbfcff;
   border-radius: var(--radius-sm);
-  padding: 14px 10px;
-  font-size: 1.05rem;
+  padding: 9px 8px;
+  font-size: 0.85rem;
   font-weight: 700;
   text-align: center;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
 }
 
-.item-chip .item-emoji { font-size: 1.8rem; }
+.item-chip .item-emoji { font-size: 1.3rem; }
 
 .item-chip:active { transform: scale(0.95); background: #eef1ff; }
 
@@ -406,7 +433,6 @@ button {
 }
 
 @media (min-width: 720px) {
-  :root { font-size: 19px; }
-  .popout { border-radius: 22px; margin-bottom: 40px; }
+  .popout { border-radius: 20px; margin-bottom: 40px; }
   .backdrop { align-items: center; }
 }

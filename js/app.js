@@ -317,10 +317,14 @@
     return btn;
   }
 
+  // Note: deliberately does NOT focus the sentence bar. Focusing a text
+  // input pops the on-screen keyboard on phones/tablets, which is exactly
+  // what we don't want when someone is just tapping through Emoji-Speak,
+  // Words, etc. — the keyboard should only appear from an explicit tap
+  // directly on the sentence bar itself.
   function appendToSentence(text) {
     const current = sentenceBar.value.trim();
     sentenceBar.value = current ? current + " " + text : text;
-    sentenceBar.focus();
   }
 
   /* ---------------- Moods rendering ---------------- */
@@ -385,7 +389,6 @@
     btn.addEventListener("click", () => {
       if (block.mode === "replace") {
         sentenceBar.value = label;
-        sentenceBar.focus();
         closePopover(navBackdrop);
       } else {
         appendToSentence(label);
@@ -631,7 +634,6 @@
 
   clearBtn.addEventListener("click", () => {
     sentenceBar.value = "";
-    sentenceBar.focus();
   });
 
   /* ---------------- Init ---------------- */
