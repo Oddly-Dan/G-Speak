@@ -5,30 +5,20 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
 <!--
-  Content-Security-Policy — kept as early in <head> as possible since a
-  meta CSP only governs what follows it in the document.
+  Content-Security-Policy — placed as early in <head> as possible, since
+  a meta CSP only governs what follows it. script-src 'self' (no
+  unsafe-inline/eval) is the directive that matters: it blocks inline
+  <script>/event-handler-attribute/javascript: payloads, which is why
+  the old inline pre-paint script moved to js/theme-preload.js.
+  style-src keeps 'unsafe-inline' since the app sets el.style.* directly
+  in several places (tile colors, popover positioning, adaptive
+  columns) — CSS can't execute script, so that's a much smaller
+  allowance. connect-src 'self' costs nothing (no network calls exist)
+  and blocks a future bug from exfiltrating anything.
 
-  script-src 'self' (no 'unsafe-inline'/'unsafe-eval') is the directive
-  that actually matters: it blocks inline <script> tags, inline event
-  handler attributes (onerror=, onclick=, ...), and javascript: URIs —
-  exactly the shape of payload a stored-XSS bug here would need. It's
-  also why the old inline dark-mode pre-paint script was moved to
-  js/theme-preload.js.
-
-  style-src keeps 'unsafe-inline' because the app sets el.style.* directly
-  in several places (category tile colors, popover positioning, the
-  adaptive column count, the toggle-switch animation) — CSS can only
-  change what things look like, not run script, so this is a much
-  smaller allowance than script-src 'unsafe-inline' would be.
-
-  connect-src 'self' costs nothing (the app makes no network requests at
-  all) and blocks a future/unknown bug from exfiltrating anything.
-
-  Note: frame-ancestors, sandbox, and report-to are NOT honored via a
-  <meta> tag (only via a real HTTP response header) and GitHub Pages
-  doesn't support custom headers — so clickjacking protection isn't
-  something this meta tag can add; that's a known, accepted gap of the
-  hosting platform, not something turned off here.
+  frame-ancestors/sandbox/report-to are NOT honored via <meta> (need a
+  real header, which GitHub Pages doesn't support) — clickjacking
+  protection is a known, accepted gap here, not something turned off.
 -->
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none';">
 <title>G-Speak</title>

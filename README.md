@@ -1,86 +1,68 @@
 # G-Speak
 
-A simple text-to-speech communication (AAC-style) app. No build step, no
-frameworks, no accounts or logins — just HTML, CSS, and vanilla
-JavaScript, using the browser's native Web Speech API for voice output
-and `localStorage` for per-device state. Nothing is ever sent anywhere;
-there's no backend.
+A simple text-to-speech communication (AAC-style) app — HTML, CSS, and
+vanilla JavaScript, no build step, no frameworks, no accounts. Speech
+uses the browser's native Web Speech API; everything else lives in
+`localStorage` on that one device. No backend, nothing ever sent
+anywhere.
 
 ## Running it
 
-Nothing to build or install for the app itself. Either:
-
-- Open `index.html` directly in a browser, or
-- Serve the folder with any static file server (e.g. `python3 -m
-  http.server`) and visit it in your browser.
+Nothing to build or install. Open `index.html` directly, or serve the
+folder with any static file server (e.g. `python3 -m http.server`).
 
 Speech works best over `http(s)`/`file://` in Chrome, Edge, or Safari.
 Available voices depend on the device and OS.
 
 ## Features
 
-- **Sentence bar** — tap it for your device's keyboard; **Enter** or the
-  green **Speak!** button reads it aloud and clears the bar.
-- **Suggestions strip** — quick-tap words under the sentence bar. `Yes`,
-  `No`, `Help` (📌) are pinned by default; others are learned from what
-  you actually speak. Press-and-hold any chip to pin/unpin it yourself.
-- **Mood toggles** — six ternary indicators (Off → negative → positive →
-  Off), e.g. Hungry/Full, Sad/Happy. Optionally (Settings → **Apply Mood
-  Modifiers**, off by default) active moods subtly, and stackably, shift
-  speaking rate/pitch — see the table in `js/app.js`'s `MOOD_MODIFIERS`.
+- **Sentence bar** — tap for the keyboard; **Enter** or **Speak!** reads
+  it aloud and clears the bar.
+- **Suggestions strip** — quick-tap words under the bar. `Yes`/`No`/
+  `Help` are pinned by default; others are learned from what you
+  actually speak. Press-and-hold any chip to pin/unpin it yourself.
+- **Mood toggles** — six ternary indicators (Off → negative → positive).
+  Optionally (Settings → Apply Mood Modifiers) active moods stackably
+  shift speaking rate/pitch — table in `MOOD_MODIFIERS`, `js/app.js`.
 - **Fast nav** — six category boards (Emoji-Speak, Words, Sentences,
-  Numbers, Needs, Things). Tapping one opens a shared pop-over: a search
-  box **scoped to that category only**, a "Most used" row, and tabs to
-  switch categories without closing it.
-  - **Emoji-Speak** pairs plain Unicode emoji with a word each, aimed at
-    an early/young communicator (3-5yo) — a free alternative to the
-    licensed picture-symbol sets real AAC apps normally use. Its curated
-    grid is backed by a much larger hidden vocabulary (animals, food,
-    nature, everyday objects...) that's search-only until promoted.
-  - **Every board is customizable** by press-and-hold (~550ms, mouse or
-    touch): pin/unpin, remove, or add typed words/sentences/numbers and
-    promoted Emoji-Speak items. Settings → **Reset All Boards** restores
-    the defaults without touching voice settings, moods, or usage
-    history. See the doc comments above `boardItems()` in `js/app.js`
-    for the full model.
+  Numbers, Needs, Things), each opening a pop-over with search scoped to
+  that category and a "Most used" row. Every board is **customizable**
+  by press-and-hold: pin, remove, or add words/sentences/numbers;
+  Settings → Reset All Boards restores the defaults. See `boardItems()`
+  in `js/app.js` for the full model.
+  - Emoji-Speak pairs emoji with a word each — a free stand-in for the
+    licensed picture-symbol sets real AAC apps use — plus a much larger
+    hidden vocabulary that's search-only until promoted onto the board.
 - **Settings** (⚙️) — Appearance (Light/Dark/System), voice/speed/pitch/
-  volume, **Speak on Press** (off by default: says a word/sentence/
-  Emoji-Speak item aloud as you tap it into the sentence bar — never for
-  typed letters), Apply Mood Modifiers, Export/Import (a `.json` backup
-  of settings, moods, usage, and board customizations), Reset All
-  Boards.
+  volume, **Speak on Press** (speaks a button's word/sentence aloud as
+  it's tapped in — never for typing), Apply Mood Modifiers, Export/
+  Import, Reset All Boards.
 
 ## Theming
 
-Two independent layers:
+- **Light/Dark/System** — user-facing, Settings → Appearance.
+- **Branding** — no UI; edit `js/theme.config.js` directly (title,
+  header logo, palette). Commented with the full option list; composes
+  with the Light/Dark/System toggle rather than fighting it.
 
-- **Light/Dark/System**, user-facing, in Settings → Appearance. Applies
-  instantly and persists per device.
-- **Branding**, for whoever deploys the app — no UI, just edit
-  **`js/theme.config.js`**: the title, header text, header logo/icon
-  (emoji, inline SVG, or an image), and palette overrides (any CSS
-  custom property from `css/style.css`'s `:root`, separately for light
-  and dark). The file is commented with the full option list and
-  composes correctly with the Light/Dark/System toggle — it isn't
-  reachable from the UI itself.
+## Privacy & security
 
-## Security
+Everything (settings, moods, usage stats, board customizations) stays
+in `localStorage` on that device — nothing is synced or sent anywhere.
+Export/Import (Settings) moves it between devices manually.
 
-Board item text is rendered via `createElement`/`textContent`, never
-`innerHTML`, since it can include arbitrary user-typed or imported text
-(see `makeItemChip()` in `js/app.js`). Imported backup files are
-type/shape-validated and size-capped field-by-field before anything is
-trusted (`sanitize*Import()` in `js/app.js`) rather than merged in
-wholesale. `index.html` also carries a restrictive
-Content-Security-Policy (`script-src 'self'`, no inline/eval) as
-defense-in-depth against this class of bug generally. `tests/security.spec.js`
-covers all of this with real exploit-shaped payloads.
+Board item text is rendered via `textContent`, never `innerHTML`, since
+it can be arbitrary typed or imported text. Imports are type/shape-
+validated and size-capped before anything is trusted
+(`sanitize*Import()`, `js/app.js`) rather than merged in wholesale. A
+restrictive Content-Security-Policy in `index.html` adds defense-in-
+depth. `tests/security.spec.js` exercises all of this with real
+exploit-shaped payloads.
 
 ## Testing
 
-A Playwright suite in `tests/` covers the app's core behavior (speech,
-mood modifiers, suggestions/moods, per-category search, boards,
-backup, theming) — dev-only tooling, not needed to run the app:
+A Playwright suite in `tests/` covers the app's core behavior — dev-only
+tooling, not needed to run the app:
 
 ```sh
 npm install
@@ -88,14 +70,8 @@ npx playwright install chromium   # skip if Playwright already has one
 npm test
 ```
 
-## Data & privacy
-
-Settings, mood state, usage stats, and board customizations all live in
-`localStorage` on that one device — nothing is synced or sent anywhere.
-Export/Import (Settings) moves them between devices manually.
-
 ## License
 
-GPL-3.0-or-later — see [`LICENSE`](LICENSE). This is meant to be a
-charitable, freely reusable codebase: fork it, re-skin it, adapt the
-vocabulary, build on it.
+GPL-3.0-or-later — see [`LICENSE`](LICENSE). A charitable, freely
+reusable codebase: fork it, re-skin it, adapt the vocabulary, build on
+it.

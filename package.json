@@ -1,6 +1,7 @@
 {
   "name": "g-speak",
   "private": true,
+  "license": "GPL-3.0-or-later",
   "description": "Dev-only tooling for G-Speak. The app itself needs none of this — see README.md.",
   "scripts": {
     "test": "playwright test"
