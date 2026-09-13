@@ -762,6 +762,11 @@ main {
 .print-sheet { display: none; }
 
 @media print {
+  /* .print-sheet is only as tall as its content, so on a partially-full
+     last page the remaining page area is html/body showing through —
+     force that to plain white too, or dark mode's near-black --bg prints
+     as a big grey/black block wasting ink for no reason. */
+  html, body { background: #fff !important; }
   body * { visibility: hidden; }
   .print-sheet, .print-sheet * { visibility: visible; }
   .print-sheet {
