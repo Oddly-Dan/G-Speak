@@ -42,7 +42,7 @@ test.describe('speaking', () => {
     await spyOnSpeech(page);
     await page.goto('/');
     await page.click('#settings-btn');
-    await page.locator('.toggle-track').click(); // Apply Mood Modifiers on
+    await page.locator('label:has(#mood-modifiers-toggle) .toggle-track').click(); // Apply Mood Modifiers on
     await page.click('[data-close="settings"]');
 
     await page.locator('.mood-toggle').first().click(); // hunger -> Hungry (x0.95 rate)
@@ -55,7 +55,7 @@ test.describe('speaking', () => {
     await spyOnSpeech(page);
     await page.goto('/');
     await page.click('#settings-btn');
-    await page.locator('.toggle-track').click();
+    await page.locator('label:has(#mood-modifiers-toggle) .toggle-track').click();
     await page.click('[data-close="settings"]');
 
     const moods = page.locator('.mood-toggle');
@@ -72,7 +72,7 @@ test.describe('speaking', () => {
     await spyOnSpeech(page);
     await page.goto('/');
     await page.click('#settings-btn');
-    const toggle = page.locator('.toggle-track');
+    const toggle = page.locator('label:has(#mood-modifiers-toggle) .toggle-track');
     await toggle.click(); // on
     await page.click('[data-close="settings"]');
     await page.locator('.mood-toggle').first().click();

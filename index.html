@@ -4,25 +4,37 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+<!--
+  Content-Security-Policy — kept as early in <head> as possible since a
+  meta CSP only governs what follows it in the document.
+
+  script-src 'self' (no 'unsafe-inline'/'unsafe-eval') is the directive
+  that actually matters: it blocks inline <script> tags, inline event
+  handler attributes (onerror=, onclick=, ...), and javascript: URIs —
+  exactly the shape of payload a stored-XSS bug here would need. It's
+  also why the old inline dark-mode pre-paint script was moved to
+  js/theme-preload.js.
+
+  style-src keeps 'unsafe-inline' because the app sets el.style.* directly
+  in several places (category tile colors, popover positioning, the
+  adaptive column count, the toggle-switch animation) — CSS can only
+  change what things look like, not run script, so this is a much
+  smaller allowance than script-src 'unsafe-inline' would be.
+
+  connect-src 'self' costs nothing (the app makes no network requests at
+  all) and blocks a future/unknown bug from exfiltrating anything.
+
+  Note: frame-ancestors, sandbox, and report-to are NOT honored via a
+  <meta> tag (only via a real HTTP response header) and GitHub Pages
+  doesn't support custom headers — so clickjacking protection isn't
+  something this meta tag can add; that's a known, accepted gap of the
+  hosting platform, not something turned off here.
+-->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none';">
 <title>G-Speak</title>
 <meta name="description" content="A simple, minimal text-to-speech communication app." />
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>%F0%9F%97%A3%EF%B8%8F</text></svg>">
-<script>
-  // Sets data-theme before first paint so an explicit Light/Dark choice
-  // doesn't flash the wrong theme for a moment — app.js re-applies (and
-  // owns) this later, this is purely a pre-paint head start. "System"
-  // (the default) needs no help here: the CSS media query already
-  // handles it with no attribute at all.
-  (function () {
-    try {
-      var raw = localStorage.getItem("gspeak.settings");
-      var theme = raw && JSON.parse(raw).theme;
-      if (theme === "light" || theme === "dark") {
-        document.documentElement.setAttribute("data-theme", theme);
-      }
-    } catch (e) {}
-  })();
-</script>
+<script src="js/theme-preload.js"></script>
 <link rel="stylesheet" href="css/style.css" />
 <script src="js/theme.config.js"></script>
 </head>
@@ -101,6 +113,19 @@
           <span>Volume <output id="volume-output">100%</output></span>
           <input type="range" id="volume-range" min="0" max="1" step="0.05" value="1" />
         </label>
+
+        <label class="toggle-row" for="speak-on-press-toggle">
+          <span>Speak on Press</span>
+          <span class="toggle-switch">
+            <input type="checkbox" id="speak-on-press-toggle" />
+            <span class="toggle-track"><span class="toggle-thumb"></span></span>
+          </span>
+        </label>
+        <p class="popout-hint">
+          Off by default. When on, tapping a suggestion or board button
+          (a word, sentence, Emoji-Speak item, etc.) says it aloud as it's
+          added to the sentence bar. Doesn't apply to typing.
+        </p>
 
         <label class="toggle-row" for="mood-modifiers-toggle">
           <span>Apply Mood Modifiers</span>

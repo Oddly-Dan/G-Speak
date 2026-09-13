@@ -281,7 +281,15 @@
   /* ---------------- Settings (voice, rate, pitch, volume) ---------------- */
 
   const settings = Object.assign(
-    { rate: 1, pitch: 1, volume: 1, voiceURI: "", applyMoodModifiers: false, theme: "system" },
+    {
+      rate: 1,
+      pitch: 1,
+      volume: 1,
+      voiceURI: "",
+      applyMoodModifiers: false,
+      speakOnPress: false,
+      theme: "system",
+    },
     loadJSON(LS_SETTINGS, {})
   );
 
@@ -475,6 +483,7 @@
   const pitchOutput = document.getElementById("pitch-output");
   const volumeOutput = document.getElementById("volume-output");
   const moodModifiersToggle = document.getElementById("mood-modifiers-toggle");
+  const speakOnPressToggle = document.getElementById("speak-on-press-toggle");
   const testVoiceBtn = document.getElementById("test-voice-btn");
   const exportBtn = document.getElementById("export-btn");
   const importBtn = document.getElementById("import-btn");
@@ -628,6 +637,11 @@
   function appendToSentence(text) {
     const current = sentenceBar.value.trim();
     sentenceBar.value = current ? current + " " + text : text;
+    // "Speak on Press": says the word/phrase aloud as it's added. Only
+    // ever reached from a button tap (chips, board items) — never from
+    // typing, since typed characters go straight into the input natively
+    // and never pass through this function.
+    if (settings.speakOnPress) speak(text);
   }
 
   /* ---------------- Press-and-hold ---------------- */
@@ -803,14 +817,28 @@
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className = "item-chip" + (pinned ? " is-pinned" : "");
-    btn.innerHTML = isObj
-      ? `<span class="item-emoji">${item.emoji}</span><span>${item.word}</span>`
-      : `<span>${item}</span>`;
+    // Built with createElement/textContent rather than innerHTML: item.word
+    // (and plain-string items) can be arbitrary text a user typed and
+    // added to a board, or restored from an imported backup file — never
+    // trust it as markup.
+    if (isObj) {
+      const emojiSpan = document.createElement("span");
+      emojiSpan.className = "item-emoji";
+      emojiSpan.textContent = item.emoji;
+      const wordSpan = document.createElement("span");
+      wordSpan.textContent = item.word;
+      btn.append(emojiSpan, wordSpan);
+    } else {
+      const span = document.createElement("span");
+      span.textContent = item;
+      btn.appendChild(span);
+    }
     makeInteractive(btn, {
       onClick: () => {
         if (block.mode === "replace") {
           sentenceBar.value = label;
           closePopover(navBackdrop);
+          if (settings.speakOnPress) speak(label);
         } else {
           appendToSentence(label);
         }
@@ -1023,6 +1051,7 @@
     pitchOutput.textContent = Number(settings.pitch).toFixed(2);
     volumeOutput.textContent = `${Math.round(settings.volume * 100)}%`;
     moodModifiersToggle.checked = !!settings.applyMoodModifiers;
+    speakOnPressToggle.checked = !!settings.speakOnPress;
   }
 
   settingsBtn.addEventListener("click", () => {
@@ -1058,6 +1087,11 @@
     saveSettings();
   });
 
+  speakOnPressToggle.addEventListener("change", () => {
+    settings.speakOnPress = speakOnPressToggle.checked;
+    saveSettings();
+  });
+
   themeSelect.addEventListener("change", () => {
     settings.theme = themeSelect.value;
     saveSettings();
@@ -1081,6 +1115,107 @@
     }
     showToast("Boards reset to defaults");
   });
+
+  /* ---------------- Import sanitization ----------------
+     An imported file is untrusted input — it can be handed around
+     between people ("here's a starter vocabulary pack!"), not just
+     round-tripped by the same person who exported it. Every field is
+     checked for type/shape and capped in size before it's trusted,
+     rather than handing the parsed JSON straight to Object.assign:
+     that would also let a crafted "__proto__" key repoint one of our
+     own objects' prototype. Building a fresh object field-by-field like
+     this never even reads such a key, so that's closed off for free. */
+
+  function isPlainObject(v) {
+    return v !== null && typeof v === "object" && !Array.isArray(v);
+  }
+
+  function sanitizeSettingsImport(raw) {
+    if (!isPlainObject(raw)) return {};
+    const out = {};
+    if (typeof raw.rate === "number" && isFinite(raw.rate)) out.rate = clamp(raw.rate, 0.1, 10);
+    if (typeof raw.pitch === "number" && isFinite(raw.pitch)) out.pitch = clamp(raw.pitch, 0, 2);
+    if (typeof raw.volume === "number" && isFinite(raw.volume)) out.volume = clamp(raw.volume, 0, 1);
+    if (typeof raw.voiceURI === "string") out.voiceURI = raw.voiceURI.slice(0, 300);
+    if (typeof raw.applyMoodModifiers === "boolean") out.applyMoodModifiers = raw.applyMoodModifiers;
+    if (typeof raw.speakOnPress === "boolean") out.speakOnPress = raw.speakOnPress;
+    if (raw.theme === "light" || raw.theme === "dark" || raw.theme === "system") out.theme = raw.theme;
+    return out;
+  }
+
+  function sanitizeMoodsImport(raw) {
+    if (!isPlainObject(raw)) return {};
+    const out = {};
+    MOODS.forEach((m) => {
+      if (raw[m.id] === 0 || raw[m.id] === 1 || raw[m.id] === 2) out[m.id] = raw[m.id];
+    });
+    return out;
+  }
+
+  function sanitizeUsageImport(raw) {
+    if (!isPlainObject(raw)) return {};
+    const out = {};
+    Object.keys(raw)
+      .slice(0, 1000)
+      .forEach((key) => {
+        const entry = raw[key];
+        if (!isPlainObject(entry)) return;
+        if (typeof entry.count !== "number" || !isFinite(entry.count)) return;
+        if (typeof entry.display !== "string") return;
+        // Re-derive the storage key from the (capped) display text rather
+        // than trusting the file's own key, so the two can never disagree.
+        // Also reject a couple of literal strings that would otherwise
+        // reach the final Object.assign as real object keys.
+        const display = entry.display.trim().slice(0, 200);
+        const storageKey = display.toLowerCase();
+        if (!display || storageKey === "__proto__" || storageKey === "constructor" || storageKey === "prototype") {
+          return;
+        }
+        out[storageKey] = { count: Math.max(0, Math.floor(entry.count)), display };
+      });
+    return out;
+  }
+
+  // A board item is either a plain string, or {emoji, word} — always
+  // just text, capped in length so nothing absurd gets stored.
+  function sanitizeBoardItem(raw) {
+    if (typeof raw === "string") return raw.slice(0, 200);
+    if (isPlainObject(raw) && typeof raw.emoji === "string" && typeof raw.word === "string") {
+      return { emoji: raw.emoji.slice(0, 20), word: raw.word.slice(0, 200) };
+    }
+    return null;
+  }
+
+  function sanitizeStringArray(raw, maxLen, maxItems) {
+    if (!Array.isArray(raw)) return [];
+    return raw
+      .filter((v) => typeof v === "string")
+      .map((v) => v.slice(0, maxLen))
+      .slice(0, maxItems);
+  }
+
+  function sanitizeBoardsImport(raw) {
+    if (!isPlainObject(raw)) return {};
+    const out = {};
+    const validIds = new Set(["home"].concat(NAV_BLOCKS.map((b) => b.id)));
+    Object.keys(raw).forEach((blockId) => {
+      if (!validIds.has(blockId)) return; // also excludes __proto__/constructor/etc.
+      const entry = raw[blockId];
+      if (!isPlainObject(entry)) return;
+      if (blockId === "home") {
+        out.home = { pinned: sanitizeStringArray(entry.pinned, 200, 100) };
+        return;
+      }
+      out[blockId] = {
+        removed: sanitizeStringArray(entry.removed, 200, 500),
+        pinned: sanitizeStringArray(entry.pinned, 200, 200),
+        added: Array.isArray(entry.added)
+          ? entry.added.map(sanitizeBoardItem).filter(Boolean).slice(0, 500)
+          : [],
+      };
+    });
+    return out;
+  }
 
   /* ---------------- Import / export (backup) ---------------- */
 
@@ -1119,8 +1254,23 @@
       } catch (e) {
         data = null;
       }
+      if (!isPlainObject(data)) {
+        alert("That file doesn't look like a valid G-Speak backup.");
+        importFileInput.value = "";
+        return;
+      }
+
+      // Sanitize before ever touching real state: type/shape-check every
+      // field and cap array/string sizes, rather than trusting the file.
+      const cleanSettings = sanitizeSettingsImport(data.settings);
+      const cleanMoods = sanitizeMoodsImport(data.moods);
+      const cleanUsage = sanitizeUsageImport(data.usage);
+      const cleanBoards = sanitizeBoardsImport(data.boards);
       const looksValid =
-        data && typeof data === "object" && (data.settings || data.usage || data.moods || data.boards);
+        Object.keys(cleanSettings).length ||
+        Object.keys(cleanMoods).length ||
+        Object.keys(cleanUsage).length ||
+        Object.keys(cleanBoards).length;
       if (!looksValid) {
         alert("That file doesn't look like a valid G-Speak backup.");
         importFileInput.value = "";
@@ -1134,24 +1284,19 @@
         return;
       }
 
-      if (data.settings && typeof data.settings === "object") {
-        Object.assign(settings, data.settings);
-      }
-      if (data.moods && typeof data.moods === "object") {
-        Object.keys(moodState).forEach((k) => delete moodState[k]);
-        Object.assign(moodState, data.moods);
-        MOODS.forEach((m) => {
-          if (typeof moodState[m.id] !== "number") moodState[m.id] = 0;
-        });
-      }
-      if (data.usage && typeof data.usage === "object") {
-        Object.keys(usage).forEach((k) => delete usage[k]);
-        Object.assign(usage, data.usage);
-      }
-      if (data.boards && typeof data.boards === "object") {
-        Object.keys(boardState).forEach((k) => delete boardState[k]);
-        Object.assign(boardState, data.boards);
-      }
+      Object.assign(settings, cleanSettings);
+
+      Object.keys(moodState).forEach((k) => delete moodState[k]);
+      Object.assign(moodState, cleanMoods);
+      MOODS.forEach((m) => {
+        if (typeof moodState[m.id] !== "number") moodState[m.id] = 0;
+      });
+
+      Object.keys(usage).forEach((k) => delete usage[k]);
+      Object.assign(usage, cleanUsage);
+
+      Object.keys(boardState).forEach((k) => delete boardState[k]);
+      Object.assign(boardState, cleanBoards);
 
       saveSettings();
       saveMoods();

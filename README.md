@@ -44,8 +44,11 @@ Available voices depend on the device and OS.
     history. See the doc comments above `boardItems()` in `js/app.js`
     for the full model.
 - **Settings** (⚙️) — Appearance (Light/Dark/System), voice/speed/pitch/
-  volume, Apply Mood Modifiers, Export/Import (a `.json` backup of
-  settings, moods, usage, and board customizations), Reset All Boards.
+  volume, **Speak on Press** (off by default: says a word/sentence/
+  Emoji-Speak item aloud as you tap it into the sentence bar — never for
+  typed letters), Apply Mood Modifiers, Export/Import (a `.json` backup
+  of settings, moods, usage, and board customizations), Reset All
+  Boards.
 
 ## Theming
 
@@ -60,6 +63,18 @@ Two independent layers:
   and dark). The file is commented with the full option list and
   composes correctly with the Light/Dark/System toggle — it isn't
   reachable from the UI itself.
+
+## Security
+
+Board item text is rendered via `createElement`/`textContent`, never
+`innerHTML`, since it can include arbitrary user-typed or imported text
+(see `makeItemChip()` in `js/app.js`). Imported backup files are
+type/shape-validated and size-capped field-by-field before anything is
+trusted (`sanitize*Import()` in `js/app.js`) rather than merged in
+wholesale. `index.html` also carries a restrictive
+Content-Security-Policy (`script-src 'self'`, no inline/eval) as
+defense-in-depth against this class of bug generally. `tests/security.spec.js`
+covers all of this with real exploit-shaped payloads.
 
 ## Testing
 
