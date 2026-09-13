@@ -725,3 +725,104 @@ main {
 }
 
 .toast[hidden] { display: none; }
+
+/* ---------- Help ---------- */
+.help-list {
+  margin: 0 0 16px;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 0.9rem;
+}
+
+/* ---------- Accessibility ---------- */
+
+/* A clear, consistent ring for keyboard focus specifically (mouse/touch
+   activation doesn't trigger :focus-visible in modern browsers), on top
+   of whatever a plain :focus rule already does for text inputs. */
+:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ---------- Print: Emoji-Speak cards ----------
+   Only ever populated right before window.print() (see printEmojiBoard()
+   in app.js). Explicit white/black regardless of the active on-screen
+   theme — a printed page shouldn't inherit dark mode. */
+.print-sheet { display: none; }
+
+@media print {
+  body * { visibility: hidden; }
+  .print-sheet, .print-sheet * { visibility: visible; }
+  .print-sheet {
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    background: #fff;
+    color: #000;
+  }
+  @page { margin: 12mm; }
+}
+
+.print-title {
+  font-size: 16pt;
+  margin: 0 0 6mm;
+  text-align: center;
+}
+
+.print-grid {
+  display: grid;
+  /* A dot at every grid intersection — i.e. every corner where four
+     cards meet — as a cutting guide. Fixed column counts (rather than
+     auto-fill) keep this background tiling in exact lockstep with the
+     card grid. */
+  background-image: radial-gradient(circle at 0 0, rgba(0, 0, 0, 0.35) 1px, transparent 1.2px);
+  background-repeat: repeat;
+}
+
+.print-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  padding: 4mm;
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+.print-card-emoji { line-height: 1; }
+
+.print-card-word {
+  margin-top: 2mm;
+  font-weight: 700;
+  text-align: center;
+  word-break: break-word;
+}
+
+.print-size-small .print-grid { grid-template-columns: repeat(4, 1.4in); background-size: 1.4in 1.4in; }
+.print-size-small .print-card { width: 1.4in; height: 1.4in; }
+.print-size-small .print-card-emoji { font-size: 0.6in; }
+.print-size-small .print-card-word { font-size: 11pt; }
+
+.print-size-medium .print-grid { grid-template-columns: repeat(3, 2in); background-size: 2in 2in; }
+.print-size-medium .print-card { width: 2in; height: 2in; }
+.print-size-medium .print-card-emoji { font-size: 0.9in; }
+.print-size-medium .print-card-word { font-size: 14pt; }
+
+.print-size-large .print-grid { grid-template-columns: repeat(2, 2.8in); background-size: 2.8in 2.8in; }
+.print-size-large .print-card { width: 2.8in; height: 2.8in; }
+.print-size-large .print-card-emoji { font-size: 1.3in; }
+.print-size-large .print-card-word { font-size: 18pt; }

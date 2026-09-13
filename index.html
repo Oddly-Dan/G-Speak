@@ -37,6 +37,7 @@
       <h1>G-Speak</h1>
     </div>
     <div class="topbar-actions">
+      <button id="help-btn" class="icon-btn icon-btn--sm" type="button" aria-label="Help" aria-haspopup="true">❓</button>
       <button id="keyboard-btn" class="icon-btn icon-btn--sm" type="button" aria-label="Show keyboard">⌨️</button>
       <button id="settings-btn" class="icon-btn icon-btn--sm" type="button" aria-label="Voice settings" aria-haspopup="true">⚙️</button>
     </div>
@@ -72,7 +73,7 @@
 
   <!-- ===================== SETTINGS POPOUT ===================== -->
   <div class="backdrop" id="settings-backdrop" hidden>
-    <div class="popout settings-popout" id="settings-popout" role="dialog" aria-label="Settings">
+    <div class="popout settings-popout" id="settings-popout" role="dialog" aria-modal="true" aria-label="Settings">
       <div class="popout-header">
         <h2>⚙️ Settings</h2>
         <button class="icon-btn" type="button" data-close="settings" aria-label="Close settings">✕</button>
@@ -155,6 +156,55 @@
           Your voice settings, moods, and usage history aren't touched.
         </p>
         <button id="reset-boards-btn" class="btn btn-danger" type="button">🔄 Reset All Boards</button>
+
+        <div class="settings-divider" role="separator"></div>
+
+        <h3 class="popout-subtitle">Print</h3>
+        <p class="popout-hint">
+          Makes a printable page of every button currently on the
+          Emoji-Speak board — handy as a physical language-learning aid
+          alongside the app. Opens your browser's print dialog; choose
+          "Save as PDF" there for a PDF, or print directly. The faint dot
+          grid marks where to cut.
+        </p>
+        <label class="field">
+          <span>Button size</span>
+          <select id="print-size-select">
+            <option value="small">Small (more per page)</option>
+            <option value="medium" selected>Medium</option>
+            <option value="large">Large (fewer per page)</option>
+          </select>
+        </label>
+        <button id="print-emoji-btn" class="btn btn-secondary" type="button">🖨️ Print My Emoji-Speak</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== HELP POPOUT ===================== -->
+  <div class="backdrop" id="help-backdrop" hidden>
+    <div class="popout" id="help-popout" role="dialog" aria-modal="true" aria-label="Help">
+      <div class="popout-header">
+        <h2>❓ Help</h2>
+        <button class="icon-btn" type="button" data-close="help" aria-label="Close help">✕</button>
+      </div>
+      <div class="popout-body">
+        <h3 class="popout-subtitle">Quick guide</h3>
+        <ul class="help-list">
+          <li>Tap the sentence bar (or ⌨️) to type; <strong>Enter</strong> or <strong>Speak!</strong> reads it aloud.</li>
+          <li>Tap a suggestion chip or a category button to add it to the sentence bar.</li>
+          <li>Tap a category tile (Emoji-Speak, Words, Sentences…) to browse and search it.</li>
+          <li>Press and hold a chip or category button to pin, remove, or add your own words.</li>
+          <li>Tap a mood pill to cycle it: Off → one feeling → its opposite.</li>
+          <li>⚙️ Settings has voice options, Appearance, Speak on Press, Print, Backup, and Reset All Boards.</li>
+        </ul>
+
+        <h3 class="popout-subtitle">About</h3>
+        <p class="popout-hint">
+          G-Speak is free, open-source software licensed under the
+          <strong>GNU GPL-3.0-or-later</strong> — you're free to use,
+          study, share, and modify it.
+        </p>
+        <a class="btn btn-secondary" href="https://github.com/Oddly-Dan/G-Speak" target="_blank" rel="noopener noreferrer">🔗 View on GitHub</a>
       </div>
     </div>
   </div>
@@ -169,7 +219,7 @@
 
   <!-- ===================== NAV / BROWSE POPOVER ===================== -->
   <div class="backdrop" id="nav-backdrop" hidden>
-    <div class="popout nav-popout" id="nav-popout" role="dialog" aria-label="Browse words and sentences">
+    <div class="popout nav-popout" id="nav-popout" role="dialog" aria-modal="true" aria-label="Browse words and sentences">
       <div class="popout-header">
         <h2>🔎 Browse</h2>
         <button class="icon-btn" type="button" data-close="nav" aria-label="Close">✕</button>
@@ -194,6 +244,11 @@
   </div>
 
 </div>
+
+<!-- Sibling of #app, not a child of it: when printing, everything under
+     #app gets hidden via display:none, which would hide this too if it
+     were nested inside — see the @media print rules in style.css. -->
+<div class="print-sheet" id="print-sheet" aria-hidden="true"></div>
 
 <script src="js/app.js"></script>
 </body>

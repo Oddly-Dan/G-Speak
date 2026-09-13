@@ -289,6 +289,7 @@
       applyMoodModifiers: false,
       speakOnPress: false,
       theme: "system",
+      printCardSize: "medium",
     },
     loadJSON(LS_SETTINGS, {})
   );
@@ -468,6 +469,8 @@
   const speakBtn = document.getElementById("speak-btn");
   const clearBtn = document.getElementById("clear-btn");
   const keyboardBtn = document.getElementById("keyboard-btn");
+  const helpBtn = document.getElementById("help-btn");
+  const helpBackdrop = document.getElementById("help-backdrop");
   const suggestionsRow = document.getElementById("suggestions-row");
   const moodRow = document.getElementById("mood-row");
   const fastnav = document.getElementById("fastnav");
@@ -489,6 +492,9 @@
   const importBtn = document.getElementById("import-btn");
   const importFileInput = document.getElementById("import-file-input");
   const resetBoardsBtn = document.getElementById("reset-boards-btn");
+  const printSizeSelect = document.getElementById("print-size-select");
+  const printEmojiBtn = document.getElementById("print-emoji-btn");
+  const printSheetEl = document.getElementById("print-sheet");
 
   const navBackdrop = document.getElementById("nav-backdrop");
   const navSearch = document.getElementById("nav-search");
@@ -695,6 +701,7 @@
 
   const contextBackdrop = document.getElementById("context-backdrop");
   const contextMenu = document.getElementById("context-menu");
+  let focusBeforeContextMenu = null;
 
   // actions: [{ label, onClick, danger? }]. Always adds a Cancel entry.
   function showContextMenu(actions) {
@@ -717,10 +724,16 @@
     cancelBtn.addEventListener("click", closeContextMenu);
     contextMenu.appendChild(cancelBtn);
     contextBackdrop.hidden = false;
+    focusBeforeContextMenu = document.activeElement;
+    contextMenu.querySelector("button").focus();
   }
 
   function closeContextMenu() {
     contextBackdrop.hidden = true;
+    if (focusBeforeContextMenu && document.body.contains(focusBeforeContextMenu)) {
+      focusBeforeContextMenu.focus();
+    }
+    focusBeforeContextMenu = null;
   }
 
   contextBackdrop.addEventListener("click", (e) => {
@@ -1011,30 +1024,53 @@
     backdrop.style.top = `${Math.max(0, Math.round(rect.bottom) + 4)}px`;
   }
 
+  // Tracks, per backdrop, whatever had focus right before it opened, so
+  // closing it (via ✕, Escape, or tapping outside) can put focus back
+  // there instead of leaving keyboard/screen-reader users stranded.
+  const focusBeforePopover = new Map();
+  const MANAGED_BACKDROPS = { settings: settingsBackdrop, nav: navBackdrop, help: helpBackdrop };
+
   function openPopover(backdrop) {
     repositionBackdrop(backdrop);
     backdrop.hidden = false;
+    focusBeforePopover.set(backdrop, document.activeElement);
+    // Move focus into the dialog (its close button) rather than leaving
+    // it wherever it was on the page behind the now-open popover.
+    const closeBtn = backdrop.querySelector("[data-close]");
+    if (closeBtn) closeBtn.focus();
   }
 
   function closePopover(backdrop) {
     backdrop.hidden = true;
+    const previous = focusBeforePopover.get(backdrop);
+    if (previous && document.body.contains(previous)) previous.focus();
+    focusBeforePopover.delete(backdrop);
   }
 
   document.querySelectorAll("[data-close]").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const target = btn.dataset.close === "settings" ? settingsBackdrop : navBackdrop;
-      closePopover(target);
-    });
+    btn.addEventListener("click", () => closePopover(MANAGED_BACKDROPS[btn.dataset.close]));
   });
 
-  [settingsBackdrop, navBackdrop].forEach((backdrop) => {
+  Object.values(MANAGED_BACKDROPS).forEach((backdrop) => {
     backdrop.addEventListener("click", (e) => {
       if (e.target === backdrop) closePopover(backdrop);
     });
   });
 
+  // Escape closes whatever's topmost: the press-and-hold menu first (it
+  // can open on top of a popover), otherwise whichever popover is open.
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "Escape") return;
+    if (!contextBackdrop.hidden) {
+      closeContextMenu();
+      return;
+    }
+    const open = Object.values(MANAGED_BACKDROPS).find((b) => !b.hidden);
+    if (open) closePopover(open);
+  });
+
   window.addEventListener("resize", () => {
-    [settingsBackdrop, navBackdrop].forEach((backdrop) => {
+    Object.values(MANAGED_BACKDROPS).forEach((backdrop) => {
       if (!backdrop.hidden) repositionBackdrop(backdrop);
     });
     if (!navBackdrop.hidden) renderNavGrid();
@@ -1052,6 +1088,7 @@
     volumeOutput.textContent = `${Math.round(settings.volume * 100)}%`;
     moodModifiersToggle.checked = !!settings.applyMoodModifiers;
     speakOnPressToggle.checked = !!settings.speakOnPress;
+    printSizeSelect.value = settings.printCardSize;
   }
 
   settingsBtn.addEventListener("click", () => {
@@ -1116,6 +1153,53 @@
     showToast("Boards reset to defaults");
   });
 
+  printSizeSelect.addEventListener("change", () => {
+    settings.printCardSize = printSizeSelect.value;
+    saveSettings();
+  });
+
+  // Builds a printable sheet of every button currently on the
+  // Emoji-Speak board (the live, customized set — same as boardItems()
+  // renders on screen) and hands off to the browser's own print dialog,
+  // where "Save as PDF" produces a PDF with no PDF library needed.
+  function printEmojiBoard() {
+    const emojiBlock = NAV_BLOCKS.find((b) => b.id === "emoji");
+    const items = boardItems(emojiBlock);
+
+    printSheetEl.innerHTML = "";
+    printSheetEl.className = "print-sheet print-size-" + settings.printCardSize;
+
+    const title = document.createElement("h1");
+    title.className = "print-title";
+    title.textContent = "G-Speak — Emoji-Speak";
+    printSheetEl.appendChild(title);
+
+    const grid = document.createElement("div");
+    grid.className = "print-grid";
+    items.forEach((item) => {
+      const card = document.createElement("div");
+      card.className = "print-card";
+      // Every Emoji-Speak board item is always an {emoji, word} object —
+      // it's the one category where an icon is mandatory (see NAV_BLOCKS).
+      const emojiSpan = document.createElement("span");
+      emojiSpan.className = "print-card-emoji";
+      emojiSpan.textContent = item.emoji;
+      const wordSpan = document.createElement("span");
+      wordSpan.className = "print-card-word";
+      wordSpan.textContent = itemLabel(item);
+      card.append(emojiSpan, wordSpan);
+      grid.appendChild(card);
+    });
+    printSheetEl.appendChild(grid);
+
+    closePopover(settingsBackdrop);
+    // Let the newly-injected content lay out before the print dialog
+    // (and the browser's own print-layout pass) takes over.
+    requestAnimationFrame(() => window.print());
+  }
+
+  printEmojiBtn.addEventListener("click", printEmojiBoard);
+
   /* ---------------- Import sanitization ----------------
      An imported file is untrusted input — it can be handed around
      between people ("here's a starter vocabulary pack!"), not just
@@ -1140,6 +1224,7 @@
     if (typeof raw.applyMoodModifiers === "boolean") out.applyMoodModifiers = raw.applyMoodModifiers;
     if (typeof raw.speakOnPress === "boolean") out.speakOnPress = raw.speakOnPress;
     if (raw.theme === "light" || raw.theme === "dark" || raw.theme === "system") out.theme = raw.theme;
+    if (["small", "medium", "large"].includes(raw.printCardSize)) out.printCardSize = raw.printCardSize;
     return out;
   }
 
@@ -1360,6 +1445,8 @@
   // besides tapping the sentence bar directly — a visible hint for anyone
   // who doesn't know tapping the bar itself works.
   keyboardBtn.addEventListener("click", () => sentenceBar.focus());
+
+  helpBtn.addEventListener("click", () => openPopover(helpBackdrop));
 
   /* ---------------- Theme config (branding) ----------------
      js/theme.config.js already applied the title and palette (before

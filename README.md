@@ -36,7 +36,14 @@ Available voices depend on the device and OS.
 - **Settings** (⚙️) — Appearance (Light/Dark/System), voice/speed/pitch/
   volume, **Speak on Press** (speaks a button's word/sentence aloud as
   it's tapped in — never for typing), Apply Mood Modifiers, Export/
-  Import, Reset All Boards.
+  Import, Reset All Boards, and **Print My Emoji-Speak** (below).
+- **Print My Emoji-Speak** (Settings → Print) — a printable page of every
+  button currently on the Emoji-Speak board, in one of three card sizes,
+  with a faint dot grid as cutting guides — a physical language-learning
+  aid alongside the app. Uses the browser's native print dialog ("Save as
+  PDF" for a PDF); no PDF library involved.
+- **Help** (❓, top-left of the header actions) — a quick usage guide, the
+  license, and a link to this repo.
 
 ## Theming
 
