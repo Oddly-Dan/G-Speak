@@ -1162,9 +1162,18 @@
   // Emoji-Speak board (the live, customized set — same as boardItems()
   // renders on screen) and hands off to the browser's own print dialog,
   // where "Save as PDF" produces a PDF with no PDF library needed.
+  // Cards per row, per size — must match each .print-size-* card width in
+  // style.css (small 1.4in×4, medium 2in×3, large 2.8in×2 fit a portrait
+  // page). Used to build real row elements below rather than relying on
+  // CSS Grid to wrap them, since browsers don't reliably keep a grid row
+  // intact across a page break (a row straddling the boundary gets sliced
+  // in half instead of pushed whole to the next page) — see printEmojiBoard.
+  const PRINT_COLUMNS = { small: 4, medium: 3, large: 2 };
+
   function printEmojiBoard() {
     const emojiBlock = NAV_BLOCKS.find((b) => b.id === "emoji");
     const items = boardItems(emojiBlock);
+    const columns = PRINT_COLUMNS[settings.printCardSize] || PRINT_COLUMNS.medium;
 
     printSheetEl.innerHTML = "";
     printSheetEl.className = "print-sheet print-size-" + settings.printCardSize;
@@ -1176,7 +1185,14 @@
 
     const grid = document.createElement("div");
     grid.className = "print-grid";
-    items.forEach((item) => {
+
+    let row = null;
+    items.forEach((item, i) => {
+      if (i % columns === 0) {
+        row = document.createElement("div");
+        row.className = "print-row";
+        grid.appendChild(row);
+      }
       const card = document.createElement("div");
       card.className = "print-card";
       // Every Emoji-Speak board item is always an {emoji, word} object —
@@ -1188,7 +1204,7 @@
       wordSpan.className = "print-card-word";
       wordSpan.textContent = itemLabel(item);
       card.append(emojiSpan, wordSpan);
-      grid.appendChild(card);
+      row.appendChild(card);
     });
     printSheetEl.appendChild(grid);
 
